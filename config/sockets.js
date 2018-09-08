@@ -1,6 +1,6 @@
 "use strict";
 
-module.exports = server => {
+module.exports = (server, pool) => {
   const io = require('socket.io')(server);
 
   io.on('connection', socket => {

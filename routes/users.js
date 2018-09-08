@@ -1,3 +1,4 @@
+const uuidv4 = require('uuid/v4');
 const shortid = require('shortid');
 
 module.exports = (app, pool) => {
