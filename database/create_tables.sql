@@ -8,7 +8,7 @@ CREATE TABLE users (
   date_joined timestamp with time zone DEFAULT NOW(),
   airport_id smallint,
   location geography,
-  coordinates text, -- "latitude longitude"
+  coordinates text, -- "longitude latitude"
   email_token text UNIQUE,
   token_time timestamp with time zone DEFAULT NOW(),
   email_verified boolean DEFAULT FALSE,
@@ -70,7 +70,7 @@ CREATE TABLE posts (
   date_posted timestamp with time zone NOT NULL DEFAULT NOW(),
   body text NOT NULL DEFAULT "",
   location geography,
-  coordinates text, -- "latitude longitude"
+  coordinates text, -- "longitude latitude"
   num_likes integer NOT NULL DEFAULT 0
 );
 
