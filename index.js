@@ -7,6 +7,7 @@ const bodyParser = require('body-parser');
 const PORT = process.env.PORT || 3000;
 console.log(process.env);
 
+// Initialize and configure database
 const pool = new Pool({
   connectionString: 'postgres://michaelhsu:ewoks4life@localhost:5432/ldr_app'
 });
