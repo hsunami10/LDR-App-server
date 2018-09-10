@@ -8,7 +8,7 @@ CREATE TABLE users (
   date_joined timestamp with time zone DEFAULT NOW(),
   airport_id smallint,
   location geography,
-  coordinates text, -- "longitude latitude"
+  coordinates text, -- longitude latitude
   email_token text UNIQUE,
   token_time timestamp with time zone DEFAULT NOW(),
   email_verified boolean DEFAULT FALSE,
@@ -21,13 +21,13 @@ CREATE TABLE users (
 CREATE TABLE partners (
   id text PRIMARY KEY,
   partner1_id text UNIQUE REFERENCES users (id), -- one who sends the request
-  partner2_id text REFERENCES users (id) DEFAULT "", -- one who accepts the request
+  partner2_id text REFERENCES users (id) DEFAULT '', -- one who accepts the request
   code text NOT NULL,
   next_meetup timestamp with time zone
 );
 
 -- Only add row if mutual friends
--- When adding row, remove row from "friend_requests"
+-- When adding row, remove row from friend_requests
 CREATE TABLE friends (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id),
@@ -52,7 +52,7 @@ CREATE TABLE reports (
   id text PRIMARY KEY,
   user_id text REFERENCES users (id),
   target_id text REFERENCES users(id),
-  body text NOT NULL DEFAULT "",
+  body text NOT NULL DEFAULT '',
   date_sent timestamp with time zone NOT NULL DEFAULT NOW()
 );
 
@@ -66,11 +66,11 @@ CREATE TABLE aliases (
 CREATE TABLE posts (
   id text PRIMARY KEY,
   author_id text REFERENCES users (id),
-  alias_id text REFERENCES aliases (id), -- Can be "", then use author_id (username)
+  alias_id text REFERENCES aliases (id), -- Can be , then use author_id (username)
   date_posted timestamp with time zone NOT NULL DEFAULT NOW(),
-  body text NOT NULL DEFAULT "",
+  body text NOT NULL DEFAULT '',
   location geography,
-  coordinates text, -- "longitude latitude"
+  coordinates text, -- longitude latitude
   num_likes integer NOT NULL DEFAULT 0
 );
 
@@ -79,7 +79,7 @@ CREATE TABLE comments (
   post_id text REFERENCES posts (id),
   author_id text REFERENCES users (id),
   date_sent timestamp with time zone NOT NULL DEFAULT NOW(),
-  body text NOT NULL DEFAULT "",
+  body text NOT NULL DEFAULT '',
   num_likes integer NOT NULL DEFAULT 0
 );
 
@@ -87,5 +87,5 @@ CREATE TABLE friend_requests (
   id text PRIMARY KEY,
   sender_id text REFERENCES users (id), -- Look here for friend requests sent
   receiver_id text REFERENCES users (id), -- Look here for friend requests pending
-  message text NOT NULL DEFAULT "Let's be friends!"
+  message text NOT NULL DEFAULT 'Let\'s be friends!'
 );
