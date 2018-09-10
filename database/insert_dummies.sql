@@ -16,4 +16,4 @@ INSERT INTO users VALUES (
 );
 
 -- Create dummy asias for users who don't have an alias to post
-INSERT INTO aliases VALUES ( "", "", "" );
+INSERT INTO aliases VALUES ("", "", "");

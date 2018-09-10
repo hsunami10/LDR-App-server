@@ -16,12 +16,16 @@ pool.on("error", (err, client) => {
   process.exit(-1);
 });
 
-// Middleware
+// ========================================== Middleware ==========================================
 app.use(morgan('dev')); // Enable HTTP request logging
-app.use(bodyParser.json()) // Parse incoming requests as JSON (request body)
-app.use(bodyParser.urlencoded({ extended: false }))
+app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
+app.use(bodyParser.urlencoded({ extended: false }));
 
-// Routes
+// Serve resources
+app.use('/images/groups', express.static(__dirname + '/public/images/groups'));
+app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'));
+
+// ============================================ Routes ============================================
 require('./routes/authentication')(app, pool);
 require('./routes/users')(app, pool);
 

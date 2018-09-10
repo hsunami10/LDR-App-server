@@ -4,7 +4,7 @@ CREATE TABLE users (
   username text NOT NULL UNIQUE,
   password text NOT NULL,
   email text UNIQUE,
-  profile_pic_path text UNIQUE,
+  profile_pic text UNIQUE, -- filename.extension
   date_joined timestamp with time zone DEFAULT NOW(),
   airport_id smallint,
   location geography,
