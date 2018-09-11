@@ -1,3 +1,5 @@
+-- 10 tables
+
 -- Dummy user
 CREATE TABLE users (
   id text PRIMARY KEY,
@@ -20,8 +22,8 @@ CREATE TABLE users (
 -- Could happen if both generate a code, and one accepts it
 CREATE TABLE partners (
   id text PRIMARY KEY,
-  partner1_id text UNIQUE REFERENCES users (id), -- one who sends the request
-  partner2_id text REFERENCES users (id) DEFAULT '', -- one who accepts the request
+  partner1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- one who sends the request
+  partner2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE DEFAULT '', -- one who accepts the request
   code text NOT NULL,
   next_meetup timestamp with time zone
 );
@@ -30,28 +32,28 @@ CREATE TABLE partners (
 -- When adding row, remove row from friend_requests
 CREATE TABLE friends (
   id text PRIMARY KEY,
-  user1_id text REFERENCES users (id),
-  user2_id text REFERENCES users (id),
+  user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_friended timestamp with time zone NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE blocked (
   id text PRIMARY KEY,
-  user1_id text REFERENCES users (id),
-  user2_id text REFERENCES users (id),
+  user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE subscribers (
   id text PRIMARY KEY,
-  subscriber_id text REFERENCES users (id),
-  user_id text REFERENCES users (id),
+  subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_subscribed timestamp with time zone NOT NULL DEFAULT NOW()
 );
 
 CREATE TABLE reports (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id),
-  target_id text REFERENCES users(id),
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  target_id text REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
   body text NOT NULL DEFAULT '',
   date_sent timestamp with time zone NOT NULL DEFAULT NOW()
 );
@@ -59,14 +61,14 @@ CREATE TABLE reports (
 -- Dummy alias
 CREATE TABLE aliases (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id),
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   alias text NOT NULL UNIQUE
 );
 
 CREATE TABLE posts (
   id text PRIMARY KEY,
-  author_id text REFERENCES users (id),
-  alias_id text REFERENCES aliases (id), -- Can be , then use author_id (username)
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  alias_id text REFERENCES aliases (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Can be , then use author_id (username)
   date_posted timestamp with time zone NOT NULL DEFAULT NOW(),
   body text NOT NULL DEFAULT '',
   location geography,
@@ -76,8 +78,8 @@ CREATE TABLE posts (
 
 CREATE TABLE comments (
   id text PRIMARY KEY,
-  post_id text REFERENCES posts (id),
-  author_id text REFERENCES users (id),
+  post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_sent timestamp with time zone NOT NULL DEFAULT NOW(),
   body text NOT NULL DEFAULT '',
   num_likes integer NOT NULL DEFAULT 0
@@ -85,7 +87,7 @@ CREATE TABLE comments (
 
 CREATE TABLE friend_requests (
   id text PRIMARY KEY,
-  sender_id text REFERENCES users (id), -- Look here for friend requests sent
-  receiver_id text REFERENCES users (id), -- Look here for friend requests pending
-  message text NOT NULL DEFAULT 'Let\'s be friends!'
+  sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
+  receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
+  message text NOT NULL DEFAULT 'Let''s be friends!'
 );

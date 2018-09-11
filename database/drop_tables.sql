@@ -1,0 +1,10 @@
+DROP TABLE friend_requests;
+DROP TABLE comments;
+DROP TABLE posts;
+DROP TABLE aliases;
+DROP TABLE reports;
+DROP TABLE subscribers;
+DROP TABLE blocked;
+DROP TABLE friends;
+DROP TABLE partners;
+DROP TABLE users;
