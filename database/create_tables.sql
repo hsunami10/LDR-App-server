@@ -4,6 +4,7 @@
 CREATE TABLE users (
   id text PRIMARY KEY,
   username text NOT NULL UNIQUE,
+  lower_case_username text NOT NULL UNIQUE, -- for ignore case sensitivity
   password text NOT NULL,
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
@@ -12,7 +13,7 @@ CREATE TABLE users (
   location geography,
   coordinates text, -- longitude latitude
   email_token text UNIQUE,
-  token_time timestamp with time zone DEFAULT NOW(),
+  token_time timestamp with time zone,
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE,
   user_type text DEFAULT 'standard'
