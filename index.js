@@ -11,8 +11,8 @@ console.log(process.env);
 const pool = new Pool({
   connectionString: 'postgres://michaelhsu:ewoks4life@localhost:5432/ldr_app'
 });
-pool.on("error", (err, client) => {
-  console.error("Unexpected error on idle client", err);
+pool.on('error', (err, client) => {
+  console.error('Unexpected error on idle client', err);
   process.exit(-1);
 });
 

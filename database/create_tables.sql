@@ -4,11 +4,11 @@
 CREATE TABLE users (
   id text PRIMARY KEY,
   username text NOT NULL UNIQUE,
-  lower_case_username text NOT NULL UNIQUE, -- for ignore case sensitivity
+  lowercase_username text NOT NULL UNIQUE, -- for ignoring case sensitivity
   password text NOT NULL,
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
-  date_joined timestamp with time zone DEFAULT NOW(),
+  date_joined timestamp with time zone NOT NULL DEFAULT NOW(),
   airport_id smallint,
   location geography,
   coordinates text, -- longitude latitude
@@ -17,6 +17,20 @@ CREATE TABLE users (
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE,
   user_type text DEFAULT 'standard'
+);
+
+CREATE TABLE topics (
+  id text PRIMARY KEY,
+  name text NOT NULL UNIQUE,
+  lowercase_name text NOT NULL UNIQUE, -- for ignoring case sensitivity
+  date_created timestamp with time zone NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE topic_subscribers (
+  id text PRIMARY KEY,
+  subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  date_subscribed timestamp with time zone NOT NULL DEFAULT NOW()
 );
 
 -- Delete from this table if any repeat partner1_id or partner2_id
@@ -44,7 +58,7 @@ CREATE TABLE blocked (
   user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
-CREATE TABLE subscribers (
+CREATE TABLE user_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -68,6 +82,7 @@ CREATE TABLE aliases (
 
 CREATE TABLE posts (
   id text PRIMARY KEY,
+  topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   alias_id text REFERENCES aliases (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Can be , then use author_id (username)
   date_posted timestamp with time zone NOT NULL DEFAULT NOW(),

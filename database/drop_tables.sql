@@ -7,4 +7,6 @@ DROP TABLE subscribers;
 DROP TABLE blocked;
 DROP TABLE friends;
 DROP TABLE partners;
+DROP TABLE topic_subscribers;
+DROP TABLE topics;
 DROP TABLE users;

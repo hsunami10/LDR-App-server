@@ -6,11 +6,22 @@ const wrapper = require('../middleware/wrapper');
 module.exports = (app, pool) => {
   // ====================================== Logging In / Out ======================================
   app.get('/api/login/:username/:password', wrapper(async (req, res) => {
-    // TODO: Query database to see if log in exists - await
-    // If exists, then return json of user data
-    // If doesn't exist, send status 400
-    res.status(200).send({
-      response: `username: ${req.params.username}, password: ${req.params.password}`
+    (async () => {
+      const client = await pool.connect();
+      try {
+        const { username, password } = req.params;
+        const res2 = await client.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
+        if (res2.rows.length === 0) {
+          res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
+        } else {
+          res.status(200).send({ id: res2.rows[0].id });
+        }
+      } finally {
+        client.release();
+      }
+    })().catch(err => {
+      console.log(err);
+      res.status(500).send(`Something went wrong: ${err}`)
     });
   }));
 
