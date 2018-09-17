@@ -13,7 +13,6 @@ module.exports = (app, pool) => {
     const { text, subjectEnum, id } = req.body;
     const subject = getFullSubject(subjectEnum);
     const successMessage = getSuccessMessage(subjectEnum);
-    let data = {};
 
     const res2 = await pool.query(`SELECT username, email, email_verified FROM users WHERE id = '${id}'`);
     if (res2.rows.length === 0) {
@@ -21,20 +20,24 @@ module.exports = (app, pool) => {
     } else {
       const { username, email, email_verified } = res2.rows[0];
       if (!email) {
-        res.status(200).send({ msg: 'No email registered for this account'});
+        res.status(200).send({ msg: 'No email registered for this account', register_email: true });
       } else {
         if (email_verified) {
-          data = {
+          const data = {
             from: `${username} <${email}>`,
             to: devEmail,
             subject,
             text
           }
           mailgun.messages().send(data, (error, body) => {
-            res.status(200).send({ msg: successMessage, success: true });
+            if (error) {
+              throw new Error('Email cannot be sent.');
+            } else {
+              res.status(200).send({ msg: successMessage, success: true });
+            }
           });
         } else {
-          res.status(200).send({ msg: 'Email address not verified' });
+          res.status(200).send({ msg: 'Email address not verified', not_verified: true });
         }
       }
     }
