@@ -41,8 +41,8 @@ const getFullSubject = subjectEnum => {
   }
 };
 
-// Only for emails from user to development team
 // What to show on the screen when an email has been successfully sent
+// Both for user-to-dev, and dev-to-users
 const getSuccessMessage = subjectEnum => {
   switch (subjectEnum) {
     case EmailSubjectEnum.feedback:

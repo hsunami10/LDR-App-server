@@ -1,10 +1,8 @@
-// Hanldes all errors in one area
-module.exports = (fn) => {
-  return (req, res, next) =>
-    Promise.resolve(fn(req, res, next))
-      .catch(err => {
-        console.log('error in middleware/wrapper.js');
-        console.log(err);
-        next();
-      })
+// Wrap async function with a Promise.resolve for centralized error handling
+module.exports = fn => (req, res, next) => {
+  fn(req, res, next)
+    .catch(err => {
+      console.log(err);
+      res.status(500).send(`Something went wrong: ${err}`);
+    })
 }
