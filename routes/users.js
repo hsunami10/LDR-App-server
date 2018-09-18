@@ -55,10 +55,8 @@ module.exports = (app, pool) => {
 
   // Set active status true / false
   app.put('/api/user/set_active', wrapper(async (req, res, next) => {
-    (async () => {
-      const { id, bool } = req.body;
-      const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
-      res.sendStatus(200);
-    })
+    const { id, bool } = req.body;
+    const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
+    res.sendStatus(200);
   }));
 };
