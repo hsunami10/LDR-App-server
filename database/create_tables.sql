@@ -9,12 +9,12 @@ CREATE TABLE users (
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
   bio text,
-  date_joined timestamp with time zone NOT NULL DEFAULT NOW(),
+  date_joined bigint NOT NULL,
   airport_id smallint,
   location geography,
   coordinates text, -- longitude latitude
   email_token text UNIQUE,
-  token_time timestamp with time zone,
+  token_time bigint,
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE,
   user_type text DEFAULT 'standard'
@@ -24,14 +24,14 @@ CREATE TABLE topics (
   id text PRIMARY KEY,
   name text NOT NULL UNIQUE,
   lowercase_name text NOT NULL UNIQUE, -- for ignoring case sensitivity
-  date_created timestamp with time zone NOT NULL DEFAULT NOW()
+  date_created bigint NOT NULL
 );
 
 CREATE TABLE topic_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_subscribed timestamp with time zone NOT NULL DEFAULT NOW()
+  date_subscribed bigint NOT NULL
 );
 
 -- Delete from this table if any repeat partner1_id or partner2_id
@@ -41,7 +41,7 @@ CREATE TABLE partners (
   partner1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- one who sends the request
   partner2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE DEFAULT '', -- one who accepts the request
   code text NOT NULL,
-  next_meetup timestamp with time zone
+  next_meetup bigint
 );
 
 -- Only add row if mutual friends
@@ -50,7 +50,7 @@ CREATE TABLE friends (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_friended timestamp with time zone NOT NULL DEFAULT NOW()
+  date_friended bigint NOT NULL
 );
 
 CREATE TABLE blocked (
@@ -63,7 +63,7 @@ CREATE TABLE user_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_subscribed timestamp with time zone NOT NULL DEFAULT NOW()
+  date_subscribed bigint NOT NULL
 );
 
 CREATE TABLE reports (
@@ -71,7 +71,7 @@ CREATE TABLE reports (
   user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   target_id text REFERENCES users(id) ON UPDATE CASCADE ON DELETE CASCADE,
   body text NOT NULL DEFAULT '',
-  date_sent timestamp with time zone NOT NULL DEFAULT NOW()
+  date_sent bigint NOT NULL
 );
 
 -- Dummy alias
@@ -86,7 +86,7 @@ CREATE TABLE posts (
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   alias_id text REFERENCES aliases (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Can be , then use author_id (username)
-  date_posted timestamp with time zone NOT NULL DEFAULT NOW(),
+  date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   location geography,
   coordinates text, -- longitude latitude
@@ -97,7 +97,7 @@ CREATE TABLE comments (
   id text PRIMARY KEY,
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE,
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_sent timestamp with time zone NOT NULL DEFAULT NOW(),
+  date_sent bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   num_likes integer NOT NULL DEFAULT 0
 );
