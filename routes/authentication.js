@@ -64,7 +64,7 @@ module.exports = (app, pool) => {
       const id = uuidv4();
       const res2 = await client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}'`); // Ignore case sensitivity
       if (res2.rows.length === 0) {
-        const cols = [id, username, username.toLowerCase(), password, moment()];
+        const cols = [id, username, username.toLowerCase(), password, moment().unix()];
         const res3 = await client.query(`INSERT INTO users (id, username, lowercase_username, password, date_joined) VALUES ($1, $2, $3, $4, $5)`, cols);
         res.status(200).send({ id });
       } else {
