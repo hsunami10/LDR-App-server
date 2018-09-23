@@ -1,5 +1,4 @@
 const uuidv4 = require('uuid/v4');
-const shortid = require('shortid');
 const wrapper = require('../middleware/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;

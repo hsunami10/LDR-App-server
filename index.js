@@ -22,7 +22,7 @@ app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // Serve resources
-app.use('/images/groups', express.static(__dirname + '/public/images/groups'));
+app.use('/images/topics', express.static(__dirname + '/public/images/topics'));
 app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'));
 
 // ============================================ Routes ============================================

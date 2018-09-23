@@ -1,5 +1,4 @@
 const uuidv4 = require('uuid/v4');
-const shortid = require('shortid');
 const moment = require('moment');
 const wrapper = require('../middleware/wrapper');
 const mailgun = require('../config/mail').mailgun;
@@ -7,8 +6,19 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
+const upload = require('../config/multer');
 
 module.exports = (app, pool) => {
+  // ======================================= Create Profile =======================================
+  app.post('/api/create_profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
+    // NOTE: Make sure the path has a / as the first character
+    const path = req.file.path.substring(6);
+    const { bio, id } = req.body;
+    const res2 = await pool.query(`UPDATE users SET bio = ${bio ? `'${bio}'` : null}, profile_pic = '${path}' WHERE id = '${req.body.id}'`);
+    res.status(200).send({ profile_pic: path, bio: bio || null })
+  }));
+
+  // ======================================= Forgot Password =======================================
   app.post('/api/login/forgot_password', wrapper(async (req, res, next) => {
     const { email } = req.body;
     const subject = getFullSubject(EmailSubjectEnum.password);
@@ -41,18 +51,14 @@ module.exports = (app, pool) => {
   }));
 
   // ====================================== Logging In / Out ======================================
+  // Info needed upon login: id only
   app.get('/api/login/:username/:password', wrapper(async (req, res, next) => {
-    const client = await pool.connect();
-    try {
-      const { username, password } = req.params;
-      const res2 = await client.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
-      if (res2.rows.length === 0) {
-        res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
-      } else {
-        res.status(200).send({ id: res2.rows[0].id });
-      }
-    } finally {
-      client.release();
+    const { username, password } = req.params;
+    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
+    if (res2.rows.length === 0) {
+      res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
+    } else {
+      res.status(200).send({ id: res2.rows[0].id });
     }
   }));
 
