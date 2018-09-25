@@ -10,11 +10,8 @@ CREATE TABLE users (
   profile_pic text UNIQUE, -- filename.extension
   bio text,
   date_joined bigint NOT NULL,
-  airport_id smallint,
   location geography,
   coordinates text, -- longitude latitude
-  email_token text UNIQUE,
-  token_time bigint,
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE,
   user_type text DEFAULT 'standard'

@@ -3,13 +3,16 @@ const app = express();
 const { Pool } = require('pg');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const passport = require('passport'); // TODO: Implement authentication
+const session = require('express-session'); // TODO: Implement authentication
+const moment = require('moment');
 
-const PORT = process.env.PORT || 3000;
-console.log(process.env);
+const PORT = process.env.PORT || 3000; // TODO: Change this when in production
+// console.log(process.env);
 
 // Initialize and configure database
 const pool = new Pool({
-  connectionString: 'postgres://michaelhsu:ewoks4life@localhost:5432/ldr_app'
+  connectionString: `postgres://michaelhsu:ewoks4life@localhost:5432/ldr_app` // TODO: Change this when in production
 });
 pool.on('error', (err, client) => {
   console.error('Unexpected error on idle client', err);
@@ -21,13 +24,16 @@ app.use(morgan('dev')); // Enable HTTP request logging
 app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// Serve resources
+// Server resources
 app.use('/images/topics', express.static(__dirname + '/public/images/topics'));
 app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'));
 
-// ============================================ Routes ============================================
+// ==================================== API Endpoints / Routes ====================================
 require('./routes/authentication')(app, pool);
 require('./routes/users')(app, pool);
+
+// ============================= Temporary routes for verifying email =============================
+require('./routes/verify')(app, pool);
 
 const server = require('http').Server(app);
 require('./config/sockets')(server, pool);

@@ -1,5 +1,5 @@
 const uuidv4 = require('uuid/v4');
-const wrapper = require('../middleware/wrapper');
+const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
@@ -30,7 +30,7 @@ module.exports = (app, pool) => {
           }
           mailgun.messages().send(data, (error, body) => {
             if (error) {
-              throw new Error('Email cannot be sent.');
+              throw new Error('Email cannot be sent');
             } else {
               res.status(200).send({ msg: successMessage, success: true });
             }

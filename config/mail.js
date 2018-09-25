@@ -1,3 +1,4 @@
+// TODO: Change this when in production
 const api_key = 'key-b77c6e496054fb400fd2d5f8e78dff6e';
 const domain = 'sandboxf23451db9a164f239f3b142877865527.mailgun.org';
 const mailgun = require('mailgun-js')({ apiKey: api_key, domain: domain });
@@ -16,6 +17,7 @@ const EmailSubjectEnum = Object.freeze({
 });
 const devEmail = 'LDR App <hsunami100@gmail.com>'; // TODO: Change app name and email here
 
+// TODO: Change this when in production
 const getFullSubject = subjectEnum => {
   switch (subjectEnum) {
     case EmailSubjectEnum.dev_updates:
@@ -43,6 +45,7 @@ const getFullSubject = subjectEnum => {
 
 // What to show on the screen when an email has been successfully sent
 // Both for user-to-dev, and dev-to-users
+// TODO: Change this when in production
 const getSuccessMessage = subjectEnum => {
   switch (subjectEnum) {
     case EmailSubjectEnum.feedback:
