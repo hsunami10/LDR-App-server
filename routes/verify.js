@@ -34,7 +34,7 @@ const cleanLinks = () => {
 const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => {
   mailgun.messages().send(data, (error, body) => {
     if (error) {
-      throw new Error('Email cannot be sent.');
+      res.status(200).send({ msg: 'Email cannot be sent, please check if it\'s valid' });
     } else {
       (async () => {
         await client.query(`UPDATE users SET email = '${email}', email_verified = ${false} WHERE id = '${id}'`);
@@ -45,7 +45,7 @@ const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => 
         }
         res.status(200).send({ msg: successMessage, success: true });
       })().catch(err => {
-        throw err;
+        res.status(500).send(new Error(`Something went wrong: ${err.message}`));
       });
     }
   });
