@@ -8,6 +8,7 @@ const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
 var liveLinks = {}; // id : unix timestamp (seconds)
+var userID_to_linkID = {}; // userID: linkID
 var runInterval = false;
 const thirtyMin = 1800; // Seconds
 const startInterval = () => {
@@ -22,6 +23,7 @@ const cleanLinks = () => {
     if (liveLinks.hasOwnProperty(keyID)) {
       if (now - liveLinks[keyID].time >= thirtyMin) {
         delete liveLinks[keyID];
+        delete userID_to_linkID[liveLinks[keyID].userID];
       }
     }
   }
@@ -38,7 +40,14 @@ const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => 
     } else {
       (async () => {
         await client.query(`UPDATE users SET email = '${email}', email_verified = ${false} WHERE id = '${id}'`);
+
+        // Handle replacing links - if user sends multiple emails, prior links expire and are replaced by the most recent one
         liveLinks[linkID] = { time: moment().unix(), userID: id };
+        if (userID_to_linkID[id]) {
+          delete liveLinks[userID_to_linkID[id]];
+        }
+        userID_to_linkID[id] = linkID;
+
         if (!runInterval) {
           runInterval = true;
           startInterval();
@@ -102,6 +111,7 @@ module.exports = (app, pool) => {
       if (now - time < thirtyMin) { // If the link was visited within 30 min, then email is verified
         await pool.query(`UPDATE users SET email_verified = ${true} WHERE id = '${userID}'`);
         delete liveLinks[req.params.id];
+        delete userID_to_linkID[userID];
       }
       res.send('Verified email!');
     } else {
