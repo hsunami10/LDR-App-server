@@ -10,7 +10,7 @@ module.exports = (app, pool) => {
   }));
 
   // Delete post
-  app.delete('/api/remove-post', wrappe(async (req, res, next) => {
+  app.delete('/api/remove-post', wrapper(async (req, res, next) => {
     // TODO: Finish this later
   }));
 
