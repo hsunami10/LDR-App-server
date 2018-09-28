@@ -8,7 +8,7 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
 module.exports = (app, pool) => {
   // Send email to development team
-  app.post('/api/user/send_email', wrapper(async (req, res, next) => {
+  app.post('/api/user/send-email', wrapper(async (req, res, next) => {
     const { text, subjectEnum, id } = req.body;
     const subject = getFullSubject(subjectEnum);
     const successMessage = getSuccessMessage(subjectEnum);
@@ -53,7 +53,7 @@ module.exports = (app, pool) => {
     }));
 
   // Set active status true / false
-  app.put('/api/user/set_active', wrapper(async (req, res, next) => {
+  app.put('/api/user/set-active', wrapper(async (req, res, next) => {
     const { id, bool } = req.body;
     const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
     res.sendStatus(200);

@@ -10,7 +10,7 @@ const upload = require('../config/multer');
 
 module.exports = (app, pool) => {
   // ======================================= Create Profile =======================================
-  app.post('/api/create_profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
+  app.post('/api/create-profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
     // NOTE: Make sure the path has a / as the first character
     const { bio, id } = req.body;
     let path = '';
@@ -24,7 +24,7 @@ module.exports = (app, pool) => {
   }));
 
   // ======================================= Forgot Password =======================================
-  app.post('/api/login/forgot_password', wrapper(async (req, res, next) => {
+  app.post('/api/login/forgot-password', wrapper(async (req, res, next) => {
     const { email } = req.body;
     const subject = getFullSubject(EmailSubjectEnum.password);
     const successMessage = getSuccessMessage(EmailSubjectEnum.password);

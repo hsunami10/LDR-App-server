@@ -61,13 +61,13 @@ const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => 
 };
 
 module.exports = (app, pool) => {
-  app.post('/api/send_verification_email', wrapper(async (req, res, next) => {
+  app.post('/api/send-verification-email', wrapper(async (req, res, next) => {
     const { id, email } = req.body;
     const linkID = uuidv4();
     const subject = getFullSubject(EmailSubjectEnum.verification);
     const successMessage = getSuccessMessage(EmailSubjectEnum.verification);
     // TODO: Change this when in production
-    const html = `Click on <a href="http://localhost:3000/verify/${linkID}">this link</a> to verify your email.\n\nBest, LDR App Team`;
+    const html = `Click on <a href="http://localhost:3000/verify-email/${linkID}">this link</a> to verify your email.\n\nBest, LDR App Team`;
     const data = {
       from: devEmail,
       to: email,
@@ -104,7 +104,10 @@ module.exports = (app, pool) => {
     }
   }));
 
-  app.get('/verify/:id', wrapper(async (req, res, next) => {
+  // QUESTION: Add a question mark like: axios.get('/user?ID=12345')
+  // NOTE: Change URl to '/verify-email?ID=12345'
+  // TODO: Change all underscores in all URLS to dashes
+  app.get('/verify-email/:id', wrapper(async (req, res, next) => {
     if (req.params.id in liveLinks) {
       const now = moment().unix();
       const { time, userID } = liveLinks[req.params.id];

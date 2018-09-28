@@ -1,4 +1,4 @@
--- 10 tables
+-- 12 tables
 
 -- Dummy user
 CREATE TABLE users (
@@ -76,7 +76,8 @@ CREATE TABLE reports (
 CREATE TABLE aliases (
   id text PRIMARY KEY,
   user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  alias text NOT NULL UNIQUE
+  alias text NOT NULL UNIQUE,
+  lowercase_alias text NOT NULL UNIQUE
 );
 
 CREATE TABLE posts (
