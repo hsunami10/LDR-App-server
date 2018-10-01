@@ -43,11 +43,10 @@ module.exports = (app, pool) => {
   }));
 
   // Get public / private user data
-  app.get('/api/user/:id/:type', wrapper(async (req, res, next) => {
-      const { id, type } = req.params;
-      if (type === 'private') {
+  app.get('/api/user/:id', wrapper(async (req, res, next) => {
+      if (req.query.type === 'private') {
         res.status(200).send({ msg: 'private user', id: req.params.id });
-      } else if (type === 'public') {
+      } else if (req.query.type === 'public') {
         res.status(200).send({ msg: 'public user', id: req.params.id });
       }
     }));
