@@ -10,6 +10,8 @@ INSERT INTO users VALUES (
   0,
   NULL,
   NULL,
+  '',
+  0,
   NULL,
   NULL,
   'standard'

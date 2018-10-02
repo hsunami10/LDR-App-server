@@ -7,30 +7,7 @@ const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
-var liveLinks = {}; // id : unix timestamp (seconds)
-var userID_to_linkID = {}; // userID: linkID
-var runInterval = false;
 const thirtyMin = 1800; // Seconds
-const startInterval = () => {
-  cleanLinks();
-  if (runInterval) { // QUESTION: How often to run this?
-    setTimeout(startInterval, 1000); // Milliseconds
-  }
-};
-const cleanLinks = () => {
-  const now = moment().unix();
-  for (let keyID in liveLinks) {
-    if (liveLinks.hasOwnProperty(keyID)) {
-      if (now - liveLinks[keyID].time >= thirtyMin) {
-        delete liveLinks[keyID];
-        delete userID_to_linkID[liveLinks[keyID].userID];
-      }
-    }
-  }
-  if (Object.keys(liveLinks).length === 0) { // If empty object, then terminate interval loop
-    runInterval = false;
-  }
-};
 
 // QUESTION: BUG: Might not throw correctly? "wrapper" might not catch it?
 const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => {
@@ -39,19 +16,7 @@ const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => 
       res.status(200).send({ msg: 'Email cannot be sent, please check if it\'s valid' });
     } else {
       (async () => {
-        await client.query(`UPDATE users SET email = '${email}', email_verified = ${false} WHERE id = '${id}'`);
-
-        // Handle replacing links - if user sends multiple emails, prior links expire and are replaced by the most recent one
-        liveLinks[linkID] = { time: moment().unix(), userID: id };
-        if (userID_to_linkID[id]) {
-          delete liveLinks[userID_to_linkID[id]];
-        }
-        userID_to_linkID[id] = linkID;
-
-        if (!runInterval) {
-          runInterval = true;
-          startInterval();
-        }
+        await client.query(`UPDATE users SET email = '${email}', token = '${linkID}', token_time = ${moment().unix()}, email_verified = ${false} WHERE id = '${id}'`);
         res.status(200).send({ msg: successMessage, success: true });
       })().catch(err => {
         res.status(500).send(new Error(`Something went wrong: ${err.message}`));
@@ -104,21 +69,21 @@ module.exports = (app, pool) => {
     }
   }));
 
-  // QUESTION: Add a question mark like: axios.get('/user?ID=12345')
-  // NOTE: Change URl to '/verify-email?ID=12345'
-  // TODO: Change all underscores in all URLS to dashes
   app.get('/verify-email/:id', wrapper(async (req, res, next) => {
-    if (req.params.id in liveLinks) {
-      const now = moment().unix();
-      const { time, userID } = liveLinks[req.params.id];
-      if (now - time < thirtyMin) { // If the link was visited within 30 min, then email is verified
-        await pool.query(`UPDATE users SET email_verified = ${true} WHERE id = '${userID}'`);
-        delete liveLinks[req.params.id];
-        delete userID_to_linkID[userID];
+    const now = moment().unix();
+    const client = await pool.connect();
+    try {
+      const res2 = await client.query(`SELECT token_time FROM users WHERE token = '${req.params.id}'`);
+      if (res2.rows.length === 0) {
+        res.send('Oops! This link has expired. You will see a "link expired" page here.');
+      } else if (res2.rows[0].token_time - now < thirtyMin) {
+        await client.query(`UPDATE users SET email_verified = ${true} WHERE token = '${req.params.id}'`);
+        res.send('Email Verified!');
+      } else {
+        res.send('Oops! This link has expired. You will see a "link expired" page here.');
       }
-      res.send('Verified email!');
-    } else {
-      res.send('Oops! This link has expired. You will see a "link expired" page here.')
+    } finally {
+      client.release();
     }
   }));
 };

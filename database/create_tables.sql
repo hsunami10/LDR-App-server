@@ -12,6 +12,8 @@ CREATE TABLE users (
   date_joined bigint NOT NULL,
   location geography,
   coordinates text, -- longitude latitude
+  token text UNIQUE,
+  token_time bigint,
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE, -- NOTE: if can't figure out how to run an event on app terminate, then remove this
   user_type text DEFAULT 'standard'
