@@ -24,6 +24,7 @@ CREATE TABLE topics (
   name text NOT NULL UNIQUE,
   lowercase_name text NOT NULL UNIQUE, -- for ignoring case sensitivity
   picture text UNIQUE,
+  description text NOT NULL,
   date_created bigint NOT NULL
 );
 
@@ -108,4 +109,11 @@ CREATE TABLE friend_requests (
   sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
   message text NOT NULL DEFAULT 'Let''s be friends!'
+);
+
+CREATE TABLE discover_searches (
+  id text PRIMARY KEY,
+  search_term text NOT NULL UNIQUE,
+  lowercase_search_term text NOT NULL UNIQUE, -- Use this to ignore case sensitivity
+  num_searches bigint NOT NULL DEFAULT 0
 );
