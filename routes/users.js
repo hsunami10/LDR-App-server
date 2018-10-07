@@ -7,54 +7,57 @@ const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
 module.exports = (app, pool) => {
-  // Send email to development team
-  app.post('/api/user/send-email', wrapper(async (req, res, next) => {
-    const { text, subjectEnum, id } = req.body;
-    const subject = getFullSubject(subjectEnum);
-    const successMessage = getSuccessMessage(subjectEnum);
-
-    const res2 = await pool.query(`SELECT username, email, email_verified FROM users WHERE id = '${id}'`);
-    if (res2.rows.length === 0) {
-      res.status(200).send({ msg: 'User account does not exist' });
-    } else {
-      const { username, email, email_verified } = res2.rows[0];
-      if (!email) {
-        res.status(200).send({ msg: 'No email registered for this account', register_email: true });
-      } else {
-        if (email_verified) {
-          const data = {
-            from: `${username} <${email}>`,
-            to: devEmail,
-            subject,
-            text
-          }
-          mailgun.messages().send(data, (error, body) => {
-            if (error) {
-              throw new Error('Email cannot be sent');
-            } else {
-              res.status(200).send({ msg: successMessage, success: true });
-            }
-          });
-        } else {
-          res.status(200).send({ msg: 'Email address not verified', not_verified: true });
-        }
-      }
-    }
-  }));
-
-  // Get public / private user data
-  app.get('/api/user/:id', wrapper(async (req, res, next) => {
+  app.route('/api/user/:id')
+    .get(wrapper(async (req, res, next) => { // http://localhost:3000/api/user/sfldkfjadskfsdf?type=private
       if (req.query.type === 'private') {
         res.status(200).send({ msg: 'private user', id: req.params.id });
       } else if (req.query.type === 'public') {
         res.status(200).send({ msg: 'public user', id: req.params.id });
       }
-    }));
+    }))
+    .post(wrapper(async (req, res, next) => {
+      if (req.params.id === 'send-email') {
+        const { text, subjectEnum, id } = req.body;
+        const subject = getFullSubject(subjectEnum);
+        const successMessage = getSuccessMessage(subjectEnum);
 
-  // Set active status true / false
-  app.put('/api/user/set-active', wrapper(async (req, res, next) => {
-    const { id, bool } = req.body;
-    const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
-    res.sendStatus(200);
-  }));
+        const res2 = await pool.query(`SELECT username, email, email_verified FROM users WHERE id = '${id}'`);
+        if (res2.rows.length === 0) {
+          res.status(200).send({ msg: 'User account does not exist' });
+        } else {
+          const { username, email, email_verified } = res2.rows[0];
+          if (!email) {
+            res.status(200).send({ msg: 'No email registered for this account', register_email: true });
+          } else {
+            if (email_verified) {
+              const data = {
+                from: `${username} <${email}>`,
+                to: devEmail,
+                subject,
+                text
+              }
+              mailgun.messages().send(data, (error, body) => {
+                if (error) {
+                  throw new Error('Email cannot be sent');
+                } else {
+                  res.status(200).send({ msg: successMessage, success: true });
+                }
+              });
+            } else {
+              res.status(200).send({ msg: 'Email address not verified', not_verified: true });
+            }
+          }
+        }
+      }
+    }))
+    .put(wrapper(async (req, res, next) => {
+      if (req.params.id === 'set-active') {
+        const { id, bool } = req.body;
+        const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
+        res.sendStatus(200);
+      }
+    }))
+    .delete(wrapper(async (req, res, next) => {
+      res.send('delete user with user id: ' + req.params.id);
+    }))
 };

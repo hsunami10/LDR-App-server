@@ -3,19 +3,9 @@ const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
 
 module.exports = (app, pool) => {
-  // Create post
-  app.post('/api/create-post', wrapper(async (req, res, next) => {
-    // TODO: Finish this later
-    // req.body: topic_id, author_id (user_id), alias_id, body, coordinates (optional, 'long lat')
-  }));
-
-  // Delete post
-  app.delete('/api/remove-post', wrapper(async (req, res, next) => {
-    // TODO: Finish this later
-  }));
-
-  // Get user feed
-  app.get('/api/retrieve-feed/:id', wrapper(async (req, res, next) => {
-    // TODO: Finish this later
-  }));
+  app.get('/api/feed/:id', wrapper(async (req, res, next) => {
+    // TODO: Get feed
+    // TODO: Paginate with query params
+    // req.params.id - user id
+  }))
 };

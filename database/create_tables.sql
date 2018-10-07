@@ -16,7 +16,7 @@ CREATE TABLE users (
   token_time bigint,
   email_verified boolean DEFAULT FALSE,
   active boolean DEFAULT FALSE, -- NOTE: if can't figure out how to run an event on app terminate, then remove this
-  user_type text DEFAULT 'standard'
+  user_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
 
 CREATE TABLE topics (
@@ -32,7 +32,9 @@ CREATE TABLE topic_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_subscribed bigint NOT NULL
+  muted boolean NOT NULL DEFAULT false,
+  date_subscribed bigint NOT NULL,
+  subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
 
 -- Delete from this table if any repeat partner1_id or partner2_id
