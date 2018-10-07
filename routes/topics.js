@@ -12,6 +12,13 @@ module.exports = (app, pool) => {
     .post(wrapper(async (req, res, next) => {
       // TODO: Create topic
       // req.params.id - user id
+      // req.body - name, topic_pic, description
+      const client = await pool.connect();
+      try {
+        // TODO: Update database here
+      } finally {
+        client.release();
+      }
     }))
     .put(wrapper (async (req, res, next) => {
       // TODO: Update specified topic

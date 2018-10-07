@@ -9,10 +9,6 @@ module.exports = (app, pool) => {
       // TODO: Paginate with query params
       // req.params.id - user id
     }))
-    .post(wrapper(async (req, res, next) => {
-      // TODO: Create post
-      // req.params.id - user id
-    }))
     .put(wrapper(async (req, res, next) => {
       // TODO: Edit post
       // req.params.id - user id
@@ -21,4 +17,9 @@ module.exports = (app, pool) => {
       // TODO: Delete post
       // req.params.id - user id
     }))
+
+  app.post('/api/posts/:id/:topic_id', wrapper(async (req, res, next) => {
+    // TODO: Create post
+    // req.params.id - user id, req.params.topic_id - topic id (can be null / undefined)
+  }))
 };

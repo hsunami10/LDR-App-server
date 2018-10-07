@@ -23,7 +23,7 @@ CREATE TABLE topics (
   id text PRIMARY KEY,
   name text NOT NULL UNIQUE,
   lowercase_name text NOT NULL UNIQUE, -- for ignoring case sensitivity
-  picture text UNIQUE,
+  topic_pic text UNIQUE,
   description text NOT NULL,
   date_created bigint NOT NULL
 );
