@@ -12,14 +12,14 @@ module.exports = (app, pool) => {
   // ======================================= Create Profile =======================================
   app.post('/api/create-profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
     // NOTE: Make sure the path has a / as the first character
-    const { bio, id } = req.body;
+    const { bio, user_id } = req.body;
     let path = '';
     if (req.file) {
       path = req.file.path.substring(6); // Get rid of "public"
     } else {
       path = null;
     }
-    const res2 = await pool.query(`UPDATE users SET bio = ${bio ? `'${bio}'` : null}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${id}'`);
+    const res2 = await pool.query(`UPDATE users SET bio = ${bio ? `'${bio}'` : null}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
     res.sendStatus(200);
   }));
 

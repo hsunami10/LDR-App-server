@@ -5,7 +5,6 @@ const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const passport = require('passport'); // TODO: Implement authentication
 const session = require('express-session'); // TODO: Implement authentication
-const moment = require('moment');
 
 const PORT = process.env.PORT || 3000; // TODO: Change this when in production
 // console.log(process.env);

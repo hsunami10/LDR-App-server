@@ -9,6 +9,8 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
     .get(wrapper(async (req, res, next) => { // http://localhost:3000/api/user/sfldkfjadskfsdf?type=private
+      // TODO: Get all user profile info for viewing
+      // Including: posts, friends, subscribers, countdown
       if (req.query.type === 'private') {
         res.status(200).send({ msg: 'private user', id: req.params.id });
       } else if (req.query.type === 'public') {

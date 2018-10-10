@@ -7,11 +7,12 @@ const storage = multer.diskStorage({
     } else if (req.body.type === 'topic') {
       cb(null, 'public/images/topics');
     } else {
-      cb(new Error('Oops, wrong image type from client.'));
+      cb(new Error('Wrong image type or undefined - req.body.type from client.'));
     }
   },
   filename: (req, file, cb) => {
     let ext = file.originalname.split('.').pop();
+    let id = '';
     if (ext === '') {
       if (file.mimetype === 'image/jpeg') {
         ext = 'jpg';
@@ -21,7 +22,20 @@ const storage = multer.diskStorage({
         cb(new Error('Wrong image extension'));
       }
     }
-    cb(null, req.body.id + '.' + ext)
+    if (req.body.type === 'profile') {
+      if (req.body.user_id === undefined) {
+        cb(new Error('req.body.user_id is undefined for uploading profile images'))
+      }
+      id = req.body.user_id;
+    } else if (req.body.type === 'topic') {
+      if (req.body.topic_id === undefined) {
+        cb(new Error('req.body.topic_id is undefined for uploading topic images'))
+      }
+      id = req.body.topic_id;
+    } else {
+      cb(new Error('Wrong image type or undefined - req.body.type from client.'));
+    }
+    cb(null, id + '.' + ext)
   }
 });
 
