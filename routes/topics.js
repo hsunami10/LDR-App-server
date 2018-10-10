@@ -36,11 +36,30 @@ module.exports = (app, pool) => {
           path = null;
         }
         const topic_id = uuidv4();
+        const sub_id = uuidv4();
         const topic_cols = [topic_id, name, name.toLowerCase(), path, description, date]
-        const topic_sub_cols = [uuidv4(), req.params.id, topic_id, date, 'admin']
+        const topic_sub_cols = [sub_id, req.params.id, topic_id, date, 'admin']
         const res3 = await client.query(`INSERT INTO topics VALUES ($1, $2, $3, $4, $5, $6)`, topic_cols);
         const res4 = await client.query(`INSERT INTO topic_subscribers (id, subscriber_id, topic_id, date_subscribed, subscriber_type) VALUES ($1, $2, $3, $4, $5)`, topic_sub_cols);
-        res.status(200).send({ success: true });
+        res.status(200).send({
+          success: true,
+          topic: {
+            id: topic_id,
+            name,
+            lowercase_name: name.toLowerCase(),
+            topic_pic: path,
+            description,
+            date_created: date
+          },
+          subscribers: {
+            id: sub_id,
+            subscriber_id: req.params.id,
+            topic_id,
+            muted: false,
+            date_subscribed: date,
+            subscriber_type: 'admin'
+          }
+        });
       } else {
         res.status(200).send({ msg: 'Topic name already taken' });
       }
