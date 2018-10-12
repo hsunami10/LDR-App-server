@@ -62,4 +62,10 @@ module.exports = (app, pool) => {
     .delete(wrapper(async (req, res, next) => {
       res.send('delete user with user id: ' + req.params.id);
     }))
+
+  // Every time the app loads up and is already logged in, check whether the user exists
+  app.get('/api/user/check/:id', wrapper(async (req, res, next) => {
+    const res2 = await pool.query(`SELECT count(1) FROM users WHERE id = '${req.params.id}'`);
+    res.status(200).send(res2.rows[0].count == 1); // == because a string of 0 or 1 is returned
+  }))
 };
