@@ -1,14 +1,14 @@
 // Generate an error message for foreign key constraint errors
 // NOTE: If table names / number changes, change this too
 const generateMessage = type => {
-  let msg = ' no longer exists. Please try again.';
+  let msg = ' has been deleted';
   // Tables that have a foreign key referencing them
   switch (type) {
     case 'topics':
       msg = 'This topic' + msg;
       break;
     case 'users':
-      msg = 'This user' + msg;
+      msg = 'This account' + msg;
       break;
     case 'posts':
       msg = 'This post' + msg;
@@ -17,7 +17,6 @@ const generateMessage = type => {
       msg = 'This alias' + msg;
       break;
     default:
-      msg = 'This' + msg;
       break;
   }
   return {
@@ -32,7 +31,7 @@ module.exports = fn => async (req, res, next) => {
     .catch(err => {
       console.log(err);
       if (err.code === '23503') { // Handle foreign key violation
-        res.status(500).send({ ...err, ...generateMessage(err.detail.split("\"")[1]) })
+        res.status(500).send({ ...err, ...generateMessage(err.detail.split("\"")[1]) });
       } else {
         res.status(500).send(err);
       }

@@ -65,7 +65,14 @@ module.exports = (app, pool) => {
 
   // Every time the app loads up and is already logged in, check whether the user exists
   app.get('/api/user/check/:id', wrapper(async (req, res, next) => {
-    const res2 = await pool.query(`SELECT count(1) FROM users WHERE id = '${req.params.id}'`);
-    res.status(200).send(res2.rows[0].count == 1); // == because a string of 0 or 1 is returned
+    const res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE id = '${req.params.id}'`);
+    if (res2.rows.length === 0) {
+      res.status(200).send({ success: false });
+    } else {
+      res.status(200).send({
+        success: true,
+        user: res2.rows[0]
+      })
+    }
   }))
 };
