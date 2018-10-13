@@ -5,7 +5,7 @@ const wrapper = require('../helpers/wrapper');
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
     .get(wrapper(async (req, res, next) => {
-      // TODO: Get post - for view post screen
+      // TODO: Get post + comments - for view post screen
       // TODO: Paginate with query params - for paginating comments
       // req.params.id - user (or post?) id
     }))

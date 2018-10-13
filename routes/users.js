@@ -19,7 +19,10 @@ module.exports = (app, pool) => {
       }
 
       if (res2.rows.length === 0) {
-        res.status(200).send({ success: false });
+        res.status(200).send({
+          success: false,
+          type: req.query.type
+        });
       } else {
         res.status(200).send({
           success: true,
