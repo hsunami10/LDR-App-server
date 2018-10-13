@@ -59,11 +59,11 @@ module.exports = (app, pool) => {
   // Info needed upon login: id only
   app.get('/api/login/:username/:password', wrapper(async (req, res, next) => {
     const { username, password } = req.params;
-    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
+    const res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE username = '${username}' AND password = '${password}'`);
     if (res2.rows.length === 0) {
       res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
     } else {
-      res.status(200).send({ id: res2.rows[0].id });
+      res.status(200).send({ user: res2.rows[0] });
     }
   }));
 

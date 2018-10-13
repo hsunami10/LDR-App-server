@@ -9,12 +9,23 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
     .get(wrapper(async (req, res, next) => { // http://localhost:3000/api/user/sfldkfjadskfsdf?type=private
-      // TODO: Get all user profile info for viewing
-      // Including: posts, friends, subscribers, countdown
+      // TODO: Find a way to get all user's posts & subscribers & other info (countdown, partner, etc.)
+      // According to the type "private" or "public"
+      let res2 = null;
       if (req.query.type === 'private') {
-        res.status(200).send({ msg: 'private user', id: req.params.id });
+        res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE id = '${req.params.id}'`);
       } else if (req.query.type === 'public') {
-        res.status(200).send({ msg: 'public user', id: req.params.id });
+        res2 = await pool.query(`SELECT id, username, profile_pic, bio, date_joined, active FROM users WHERE id = '${req.params.id}'`);
+      }
+
+      if (res2.rows.length === 0) {
+        res.status(200).send({ success: false });
+      } else {
+        res.status(200).send({
+          success: true,
+          type: req.query.type,
+          user: res2.rows[0]
+        });
       }
     }))
     .post(wrapper(async (req, res, next) => {
@@ -62,17 +73,4 @@ module.exports = (app, pool) => {
     .delete(wrapper(async (req, res, next) => {
       res.send('delete user with user id: ' + req.params.id);
     }))
-
-  // Every time the app loads up and is already logged in, check whether the user exists
-  app.get('/api/user/check/:id', wrapper(async (req, res, next) => {
-    const res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE id = '${req.params.id}'`);
-    if (res2.rows.length === 0) {
-      res.status(200).send({ success: false });
-    } else {
-      res.status(200).send({
-        success: true,
-        user: res2.rows[0]
-      })
-    }
-  }))
 };
