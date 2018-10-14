@@ -19,7 +19,7 @@ module.exports = (app, pool) => {
     } else {
       path = null;
     }
-    const res2 = await pool.query(`UPDATE users SET bio = ${bio ? `'${bio}'` : null}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
+    const res2 = await pool.query(`UPDATE users SET bio = ${bio.length === 0 ? `''` : `'${bio}'`}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
     res.sendStatus(200);
   }));
 
@@ -75,8 +75,8 @@ module.exports = (app, pool) => {
       const id = uuidv4();
       const res2 = await client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}'`); // Ignore case sensitivity
       if (res2.rows.length === 0) {
-        const cols = [id, username, username.toLowerCase(), password, moment().unix()];
-        const res3 = await client.query(`INSERT INTO users (id, username, lowercase_username, password, date_joined) VALUES ($1, $2, $3, $4, $5)`, cols);
+        const cols = [id, username, username.toLowerCase(), password, '', moment().unix()];
+        const res3 = await client.query(`INSERT INTO users (id, username, lowercase_username, password, bio, date_joined) VALUES ($1, $2, $3, $4, $5, $6)`, cols);
         res.status(200).send({ id });
       } else {
         res.status(200).send({ msg: 'Username already taken.' });

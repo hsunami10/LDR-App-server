@@ -6,7 +6,7 @@ INSERT INTO users VALUES (
   '',
   NULL,
   NULL,
-  NULL,
+  '',
   0,
   NULL,
   NULL,
