@@ -31,6 +31,7 @@ app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'
 require('./routes/authentication')(app, pool);
 require('./routes/feed')(app, pool);
 require('./routes/posts')(app, pool);
+require('./routes/profile')(app, pool);
 require('./routes/topics')(app, pool);
 require('./routes/users')(app, pool);
 

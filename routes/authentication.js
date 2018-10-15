@@ -6,23 +6,8 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const upload = require('../config/multer');
 
 module.exports = (app, pool) => {
-  // ======================================= Create Profile =======================================
-  app.post('/api/create-profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
-    // NOTE: Make sure the path has a / as the first character
-    const { bio, user_id } = req.body;
-    let path = '';
-    if (req.file) {
-      path = req.file.path.substring(6); // Get rid of "public"
-    } else {
-      path = null;
-    }
-    const res2 = await pool.query(`UPDATE users SET bio = ${bio.length === 0 ? `''` : `'${bio}'`}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
-    res.sendStatus(200);
-  }));
-
   // ======================================= Forgot Password =======================================
   app.post('/api/login/forgot-password', wrapper(async (req, res, next) => {
     const { email } = req.body;
@@ -59,11 +44,12 @@ module.exports = (app, pool) => {
   // Info needed upon login: id only
   app.get('/api/login/:username/:password', wrapper(async (req, res, next) => {
     const { username, password } = req.params;
-    const res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE username = '${username}' AND password = '${password}'`);
+    // NOTE: Same query as get /api/user/:id private || public
+    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
     if (res2.rows.length === 0) {
       res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
     } else {
-      res.status(200).send({ user: res2.rows[0] });
+      res.status(200).send({ id: res2.rows[0].id });
     }
   }));
 

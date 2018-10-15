@@ -9,24 +9,31 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
     .get(wrapper(async (req, res, next) => { // http://localhost:3000/api/user/sfldkfjadskfsdf?type=private
-      // TODO: Find a way to get all user's posts & subscribers & other info (countdown, partner, etc.)
-      // According to the type "private" or "public"
+      // According to the type "private" or "public" or "edit"
+      // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
+      // "edit" - get the rest of the data needed for profile management
       let res2 = null;
-      if (req.query.type === 'private') {
-        res2 = await pool.query(`SELECT id, username, password, email, profile_pic, bio, date_joined, coordinates, active, user_type FROM users WHERE id = '${req.params.id}'`);
-      } else if (req.query.type === 'public') {
-        res2 = await pool.query(`SELECT id, username, profile_pic, bio, date_joined, active FROM users WHERE id = '${req.params.id}'`);
+      const { type } = req.query;
+      if (type === 'private' || type === 'public') {
+        // TODO: Finish getting all public information - partner (if applicable), countdown (if applicable), posts
+        // Get friends and subscribers when the tabs (in view profile screen) are visited
+        // NOTE: Same query as get /api/login/:username/:password
+        res2 = await pool.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${req.params.id}'`);
+      } else if (type === 'edit') {
+        console.log('get rest of profile needed to edit - more private information');
+      } else {
+        throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
       }
 
       if (res2.rows.length === 0) {
         res.status(200).send({
           success: false,
-          type: req.query.type
+          type: type
         });
       } else {
         res.status(200).send({
           success: true,
-          type: req.query.type,
+          type: type,
           user: res2.rows[0]
         });
       }
