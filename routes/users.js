@@ -16,6 +16,7 @@ module.exports = (app, pool) => {
       const { type } = req.query;
       if (type === 'private' || type === 'public') {
         // TODO: Finish getting all public information - partner (if applicable), countdown (if applicable), posts
+        // Might have to make separate queries
         // Get friends and subscribers when the tabs (in view profile screen) are visited
         // NOTE: Same query as get /api/login/:username/:password
         res2 = await pool.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${req.params.id}'`);

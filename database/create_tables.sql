@@ -37,23 +37,37 @@ CREATE TABLE topic_subscribers (
   subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
 
--- Delete from this table if any repeat partner1_id or partner2_id
--- Could happen if both generate a code, and one accepts it
+-- When adding a row, remove all related rows from partner_requests
 CREATE TABLE partners (
   id text PRIMARY KEY,
-  partner1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- one who sends the request
-  partner2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE DEFAULT '', -- one who accepts the request
-  code text NOT NULL,
-  next_meetup bigint
+  user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  countdown bigint
+);
+
+-- Can only have one request for a partner at a time - 1 row for each "sender"
+-- Subsequent requests to different users override (update receiver_id and code) the previous request
+CREATE TABLE partner_requests (
+  id text PRIMARY KEY,
+  sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests sent
+  receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests pending
+  code text NOT NULL UNIQUE -- shortid
 );
 
 -- Only add row if mutual friends
--- When adding row, remove row from friend_requests
+-- When adding a row, remove the related row from friend_requests
 CREATE TABLE friends (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_friended bigint NOT NULL
+);
+
+CREATE TABLE friend_requests (
+  id text PRIMARY KEY,
+  sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
+  receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
+  message text NOT NULL DEFAULT 'Let''s be friends!'
 );
 
 CREATE TABLE blocked (
@@ -104,13 +118,6 @@ CREATE TABLE comments (
   date_sent bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   num_likes integer NOT NULL DEFAULT 0
-);
-
-CREATE TABLE friend_requests (
-  id text PRIMARY KEY,
-  sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
-  receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
-  message text NOT NULL DEFAULT 'Let''s be friends!'
 );
 
 CREATE TABLE discover_searches (

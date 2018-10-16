@@ -1,14 +1,15 @@
 // Generate an error message for foreign key constraint errors
 // NOTE: If table names / number changes, change this too
 const generateMessage = type => {
-  let msg = ' has been deleted';
+  let msg = ' does not exist or has been deleted.';
   // Tables that have a foreign key referencing them
+  // NOTE: Same as client, helpers/index.js, function handleError
   switch (type) {
     case 'topics':
       msg = 'This topic' + msg;
       break;
     case 'users':
-      msg = 'This account' + msg;
+      msg = 'This account' + msg + ' If this keeps recurring, please send a bug report, and we will get it fixed as soon as possible.';
       break;
     case 'posts':
       msg = 'This post' + msg;

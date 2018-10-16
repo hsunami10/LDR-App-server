@@ -1,12 +1,13 @@
 DROP TABLE discover_searches;
-DROP TABLE friend_requests;
 DROP TABLE comments;
 DROP TABLE posts;
 DROP TABLE aliases;
 DROP TABLE reports;
 DROP TABLE user_subscribers;
 DROP TABLE blocked;
+DROP TABLE friend_requests;
 DROP TABLE friends;
+DROP TABLE partner_requests;
 DROP TABLE partners;
 DROP TABLE topic_subscribers;
 DROP TABLE topics;
