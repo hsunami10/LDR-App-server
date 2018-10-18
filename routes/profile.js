@@ -5,7 +5,7 @@ const upload = require('../config/multer');
 
 module.exports = (app, pool) => {
   // ======================================= Create Profile =======================================
-  app.put('/api/profile', upload.single('clientImage'), wrapper(async (req, res, next) => {
+  app.put('/api/profile/create', upload.single('clientImage'), wrapper(async (req, res, next) => {
     // NOTE: Make sure the path has a / as the first character
     const { bio, user_id } = req.body;
     let path = '';

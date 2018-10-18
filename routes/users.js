@@ -8,37 +8,6 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
-    .get(wrapper(async (req, res, next) => { // http://localhost:3000/api/user/sfldkfjadskfsdf?type=private
-      // According to the type "private" or "public" or "edit"
-      // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
-      // "edit" - get the rest of the data needed for profile management
-      let res2 = null;
-      const { type } = req.query;
-      if (type === 'private' || type === 'public') {
-        // TODO: Finish getting all public information - partner (if applicable), countdown (if applicable), posts
-        // Might have to make separate queries
-        // Get friends and subscribers when the tabs (in view profile screen) are visited
-        // NOTE: Same query as get /api/login/:username/:password
-        res2 = await pool.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${req.params.id}'`);
-      } else if (type === 'edit') {
-        console.log('get rest of profile needed to edit - more private information');
-      } else {
-        throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
-      }
-
-      if (res2.rows.length === 0) {
-        res.status(200).send({
-          success: false,
-          type: type
-        });
-      } else {
-        res.status(200).send({
-          success: true,
-          type: type,
-          user: res2.rows[0]
-        });
-      }
-    }))
     .post(wrapper(async (req, res, next) => {
       if (req.params.id === 'send-email') {
         const { text, subjectEnum, id } = req.body;
@@ -84,4 +53,47 @@ module.exports = (app, pool) => {
     .delete(wrapper(async (req, res, next) => {
       res.send('delete user with user id: ' + req.params.id);
     }))
+
+  app.get('/api/user/:id/:type', wrapper(async (req, res, next) => {
+    // According to the type "private" or "public" or "edit"
+    // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
+    // "edit" - get the rest of the data needed for profile management
+    const client = await pool.connect();
+    try {
+      let users, posts, partners;
+      const { id, type } = req.params;
+      if (type === 'private' || type === 'public') {
+        // Get friends and subscribers when the tabs (in view profile screen) are visited
+        [users, posts, partners] = await Promise.all([
+          client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
+          client.query(`SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes FROM posts WHERE author_id = '${id}' ORDER BY date_posted DESC`),
+          client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
+        ]);
+      } else if (type === 'edit') {
+        console.log('get rest of profile needed to edit - more private information');
+      } else {
+        throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
+      }
+
+      if (users.rows.length === 0) {
+        res.status(200).send({
+          success: false,
+          type: type
+        });
+      } else {
+        posts = posts.rows.reduce((acc, post) => { // Convert array of objects to object of objects
+          return { ...acc, [post.id]: post };
+        }, {});
+        res.status(200).send({
+          success: true,
+          type: type,
+          user: users.rows[0],
+          posts,
+          partner: partners.rows.length === 0 ? {} : partners.rows[0]
+        });
+      }
+    } finally {
+      client.release();
+    }
+  }))
 };

@@ -40,8 +40,9 @@ CREATE TABLE topic_subscribers (
 -- When adding a row, remove all related rows from partner_requests
 CREATE TABLE partners (
   id text PRIMARY KEY,
-  user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  date_together bigint, -- start date
   countdown bigint
 );
 
@@ -51,6 +52,7 @@ CREATE TABLE partner_requests (
   id text PRIMARY KEY,
   sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests sent
   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests pending
+  date_sent bigint NOT NULL,
   code text NOT NULL UNIQUE -- shortid
 );
 
@@ -67,6 +69,7 @@ CREATE TABLE friend_requests (
   id text PRIMARY KEY,
   sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
+  date_sent bigint NOT NULL,
   message text NOT NULL DEFAULT 'Let''s be friends!'
 );
 
