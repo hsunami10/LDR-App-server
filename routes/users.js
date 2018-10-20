@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const limit = require('../config/constants').limit;
+const paginate = require('../helpers/paginate');
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
@@ -68,7 +68,7 @@ module.exports = (app, pool) => {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
         [users, posts, partners] = await Promise.all([
           client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-          client.query(`SELECT * FROM (SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes, ROW_NUMBER () OVER (ORDER BY date_posted DESC) AS RowNum FROM posts WHERE author_id = '${id}') AS RowConstrainedResult WHERE RowNum > 0 AND RowNum <= ${limit} ORDER BY RowNum`),
+          client.query(paginate.postsQuery(id, 'date_posted', 'DESC', 0)),
           client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
         ]);
       } else if (type === 'edit') {
@@ -88,7 +88,10 @@ module.exports = (app, pool) => {
           type: type,
           user: {
             ...users.rows[0],
-            posts: posts.rows,
+            posts: {
+              offset: paginate.limit,
+              data: posts.rows
+            },
             partner: partners.rows.length === 0 ? null : partners.rows[0]
           }
         });
