@@ -64,11 +64,12 @@ module.exports = (app, pool) => {
     try {
       let users, posts, partners;
       const { id, type } = req.params;
+      const { query, newOffset } = paginate.posts(id, 'date_posted', 'DESC', 0);
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
         [users, posts, partners] = await Promise.all([
           client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-          client.query(paginate.postsQuery(id, 'date_posted', 'DESC', 0)),
+          client.query(query),
           client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
         ]);
       } else if (type === 'edit') {
@@ -89,7 +90,7 @@ module.exports = (app, pool) => {
           user: {
             ...users.rows[0],
             posts: {
-              offset: paginate.limit,
+              offset: newOffset,
               data: posts.rows
             },
             partner: partners.rows.length === 0 ? null : partners.rows[0]
