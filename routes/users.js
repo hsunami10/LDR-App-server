@@ -63,40 +63,12 @@ module.exports = (app, pool) => {
     try {
       let users, posts, partners;
       const { id, type } = req.params;
-      // NOTE: Sort posts by: 'newest', 'popular', 'nearest'
-      const { limit, sort_by, offset } = req.query;
-      let postsQuery = '';
-
-      // Map sort by values to column names
-      if (sort_by === 'newest' || sort_by === 'popular') {
-        let column = sort_by === 'newest' ? 'date_posted' : 'num_likes';
-        postsQuery = `SELECT * FROM (SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes, ROW_NUMBER () OVER (ORDER BY ${column} DESC) AS RowNum FROM posts WHERE author_id = '${id}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${limit} ORDER BY RowNum`;
-      } else if (sort_by === 'location') {
-        // TODO: Create a nearest location query with pagination
-        postsQuery = '';
-      } else {
-        console.trace('error: wrong sort type query for paging');
-        throw new Error('Wrong sort type query: can only be newest, popular, or location');
-      }
-
+      const { limit } = req.query;
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
-        // https://stackoverflow.com/questions/109232/what-is-the-best-way-to-paginate-results-in-sql-server
-        /*
-        example query
-        SELECT  *
-        FROM    ( SELECT    id, username, date_joined, ROW_NUMBER() OVER ( ORDER BY date_joined ) AS RowNum
-                  FROM      users
-                  WHERE     date_joined >= 0
-        		 			AND id != ''
-                ) AS RowConstrainedResult
-        WHERE   RowNum >= 1
-            AND RowNum <= 20
-        ORDER BY RowNum
-         */
         [users, posts, partners] = await Promise.all([
           client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-          client.query(postsQuery),
+          client.query(`SELECT * FROM (SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes, ROW_NUMBER () OVER (ORDER BY date_posted DESC) AS RowNum FROM posts WHERE author_id = '${id}') AS RowConstrainedResult WHERE RowNum > 0 AND RowNum <= ${limit} ORDER BY RowNum`),
           client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
         ]);
       } else if (type === 'edit') {

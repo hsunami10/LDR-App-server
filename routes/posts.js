@@ -8,6 +8,19 @@ module.exports = (app, pool) => {
       // TODO: Get post + comments - for view post screen
       // TODO: Paginate with query params - for paginating comments
       // req.params.id - user (or post?) id
+      // NOTE: Sort posts by: 'newest', 'popular', 'nearest'
+      /*
+      example query
+      SELECT  *
+      FROM    ( SELECT    id, username, date_joined, ROW_NUMBER() OVER ( ORDER BY date_joined ) AS RowNum
+                FROM      users
+                WHERE     date_joined >= 0
+                AND id != ''
+              ) AS RowConstrainedResult
+      WHERE   RowNum >= 1
+          AND RowNum <= 20
+      ORDER BY RowNum
+       */
     }))
     .post(wrapper(async (req, res, next) => {
       // TODO: Create post
