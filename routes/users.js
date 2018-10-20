@@ -1,5 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
+const limit = require('../config/constants').limit;
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
@@ -63,7 +64,6 @@ module.exports = (app, pool) => {
     try {
       let users, posts, partners;
       const { id, type } = req.params;
-      const { limit } = req.query;
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
         [users, posts, partners] = await Promise.all([
