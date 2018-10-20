@@ -1,4 +1,5 @@
 const uuidv4 = require('uuid/v4');
+const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
@@ -62,11 +63,40 @@ module.exports = (app, pool) => {
     try {
       let users, posts, partners;
       const { id, type } = req.params;
+      // NOTE: Sort posts by: 'newest', 'popular', 'nearest'
+      const { limit, sort_by, offset } = req.query;
+      let postsQuery = '';
+
+      // Map sort by values to column names
+      if (sort_by === 'newest' || sort_by === 'popular') {
+        let column = sort_by === 'newest' ? 'date_posted' : 'num_likes';
+        postsQuery = `SELECT * FROM (SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes, ROW_NUMBER () OVER (ORDER BY ${column} DESC) AS RowNum FROM posts WHERE author_id = '${id}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${limit} ORDER BY RowNum`;
+      } else if (sort_by === 'location') {
+        // TODO: Create a nearest location query with pagination
+        postsQuery = '';
+      } else {
+        console.trace('error: wrong sort type query for paging');
+        throw new Error('Wrong sort type query: can only be newest, popular, or location');
+      }
+
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
+        // https://stackoverflow.com/questions/109232/what-is-the-best-way-to-paginate-results-in-sql-server
+        /*
+        example query
+        SELECT  *
+        FROM    ( SELECT    id, username, date_joined, ROW_NUMBER() OVER ( ORDER BY date_joined ) AS RowNum
+                  FROM      users
+                  WHERE     date_joined >= 0
+        		 			AND id != ''
+                ) AS RowConstrainedResult
+        WHERE   RowNum >= 1
+            AND RowNum <= 20
+        ORDER BY RowNum
+         */
         [users, posts, partners] = await Promise.all([
           client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-          client.query(`SELECT id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes FROM posts WHERE author_id = '${id}' ORDER BY date_posted DESC`),
+          client.query(postsQuery),
           client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
         ]);
       } else if (type === 'edit') {
@@ -81,15 +111,14 @@ module.exports = (app, pool) => {
           type: type
         });
       } else {
-        posts = posts.rows.reduce((acc, post) => { // Convert array of objects to object of objects
-          return { ...acc, [post.id]: post };
-        }, {});
         res.status(200).send({
           success: true,
           type: type,
-          user: users.rows[0],
-          posts,
-          partner: partners.rows.length === 0 ? {} : partners.rows[0]
+          user: {
+            ...users.rows[0],
+            posts: posts.rows,
+            partner: partners.rows.length === 0 ? null : partners.rows[0]
+          }
         });
       }
     } finally {

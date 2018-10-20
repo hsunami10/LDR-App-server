@@ -4,6 +4,7 @@ const wrapper = require('../helpers/wrapper');
 const upload = require('../config/multer');
 
 module.exports = (app, pool) => {
+  // NOTE: Anything related to editing profile here
   // ======================================= Create Profile =======================================
   app.put('/api/profile/create', upload.single('clientImage'), wrapper(async (req, res, next) => {
     // NOTE: Make sure the path has a / as the first character

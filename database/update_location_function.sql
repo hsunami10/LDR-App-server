@@ -6,7 +6,7 @@ DECLARE
 	g_id text;
 	r record;
 	user_id text := cast(u_id as text);
-	user_coord text := cast(u_coord as text);
+	user_coord text := cast(u_coord as text); -- longitude latitude
 	user_radius double precision := cast(u_rad as double precision);
 	user_location geography(POINT,4326) := ST_GeogFromText('SRID=4326;POINT(' || user_coord || ')');
 BEGIN
