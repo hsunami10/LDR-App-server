@@ -51,7 +51,7 @@ module.exports = (app, pool) => {
             description,
             date_created: date
           },
-          subscribers: {
+          subscriber: {
             id: sub_id,
             subscriber_id: req.params.id,
             topic_id,

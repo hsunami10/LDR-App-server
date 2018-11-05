@@ -62,18 +62,21 @@ module.exports = (app, pool) => {
     // "edit" - get the rest of the data needed for profile management
     const client = await pool.connect();
     try {
-      let users, posts, partners;
+      let users, posts, partners, aliases;
       const { id, type } = req.params;
-      const { query, newOffset } = paginate.posts(id, 'date_posted', 'DESC', 0);
+      const query = paginate.posts(id, 'date_posted', 'DESC', 0);
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
-        [users, posts, partners] = await Promise.all([
+        [users, posts, partners, aliases] = await Promise.all([
           client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
           client.query(query),
-          client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
+          client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
+          client.query(`SELECT id, alias FROM aliases WHERE user_id = '${id}' ORDER BY alias DESC`) // Alphabetical order
         ]);
       } else if (type === 'edit') {
         console.log('get rest of profile needed to edit - more private information');
+      } else if (type === 'partner') {
+        console.log('get partner\'s profile - hide posts that have aliases');
       } else {
         throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
       }
@@ -89,8 +92,9 @@ module.exports = (app, pool) => {
           type: type,
           user: {
             ...users.rows[0],
+            aliases: aliases.rows,
             posts: {
-              offset: newOffset,
+              offset: posts.rows.length,
               data: posts.rows
             },
             partner: partners.rows.length === 0 ? null : partners.rows[0]
