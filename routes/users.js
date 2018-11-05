@@ -68,7 +68,7 @@ module.exports = (app, pool) => {
       if (type === 'private' || type === 'public') {
         // Get friends and subscribers when the tabs (in view profile screen) are visited
         [users, posts, partners, aliases] = await Promise.all([
-          client.query(`SELECT username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
+          client.query(`SELECT id, username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
           client.query(query),
           client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
           client.query(`SELECT id, alias FROM aliases WHERE user_id = '${id}' ORDER BY alias DESC`) // Alphabetical order
