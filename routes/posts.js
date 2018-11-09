@@ -28,14 +28,17 @@ module.exports = (app, pool) => {
       const date = moment().unix();
       const cols = [post_id, topic_id, req.params.id, alias_id, date, body, coordinates]
       const res2 = await pool.query(`INSERT INTO posts (id, topic_id, author_id, alias_id, date_posted, body, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7)`, cols);
+
+      // NOTE: Keep same format as paginate.js posts query, except rowNum
+      // id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes
       res.status(200).send({
         id: post_id,
-        author_id: req.params.id,
         topic_id,
+        author_id: req.params.id,
         alias_id,
+        date_posted: date,
         body,
         coordinates,
-        date_posted: date,
         num_likes: 0
       });
     }))

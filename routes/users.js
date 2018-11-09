@@ -19,12 +19,12 @@ module.exports = (app, pool) => {
         let users, posts, partners, aliases;
         const { id } = req.params;
         const { type } = req.query;
-        const query = paginate.posts(id, 'date_posted', 'DESC', 0);
+        const postsQuery = paginate.posts(id, 'date_posted', 'DESC', 0);
         if (type === 'private' || type === 'public') {
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [users, posts, partners, aliases] = await Promise.all([
-            client.query(`SELECT id, username, profile_pic, bio, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-            client.query(query),
+            client.query(`SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${id}'`),
+            client.query(postsQuery),
             client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
             // NOTE: Same query as get-alias below
             client.query(`SELECT id, alias FROM aliases WHERE user_id = '${id}' ORDER BY alias DESC`) // Alphabetical order
