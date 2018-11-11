@@ -1,6 +1,7 @@
 // Generate an error message for foreign key constraint errors
 // NOTE: If table names / number changes, change this too
 const generateMessage = type => {
+  console.log(type);
   let msg = ' does not exist or has been deleted.';
   // Tables that have a foreign key referencing them
   // NOTE: Same as client, helpers/index.js, function handleError
@@ -32,6 +33,7 @@ module.exports = fn => async (req, res, next) => {
     .catch(err => {
       console.log(err);
       if (err.code === '23503') { // Handle foreign key violation
+        console.log('foreign key violation');
         res.status(500).send({ ...err, ...generateMessage(err.detail.split("\"")[1]) });
       } else {
         res.status(500).send(err);

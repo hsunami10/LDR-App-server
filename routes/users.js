@@ -1,12 +1,13 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const paginate = require('../helpers/paginate');
+const paginatePosts = require('../helpers/paginate').posts;
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
+const getUserAliases = require('../helpers/queries').getUserAliases;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
@@ -19,15 +20,13 @@ module.exports = (app, pool) => {
         let users, posts, partners, aliases;
         const { id } = req.params;
         const { type } = req.query;
-        const postsQuery = paginate.posts(id, 'date_posted', 'DESC', 0);
         if (type === 'private' || type === 'public') {
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [users, posts, partners, aliases] = await Promise.all([
             client.query(`SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-            client.query(postsQuery),
+            client.query(paginatePosts(id, 'date_posted', 'DESC', 0)),
             client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
-            // NOTE: Same query as get-alias below
-            client.query(`SELECT id, alias FROM aliases WHERE user_id = '${id}' ORDER BY alias DESC`) // Alphabetical order
+            client.query(getUserAliases(id))
           ]);
         } else if (type === 'edit') {
           console.log('get rest of profile needed to edit - more private information');
@@ -109,7 +108,7 @@ module.exports = (app, pool) => {
 
   app.get('/api/user/alias/:id', wrapper(async (req, res, next) => {
     // NOTE: Same query as above
-    const res2 = await pool.query(`SELECT id, alias FROM aliases WHERE user_id = '${req.params.id}' ORDER BY alias DESC`);
+    const res2 = await pool.query(getUserAliases(req.params.id));
     res.status(200).send(res2.rows);
   }))
 };

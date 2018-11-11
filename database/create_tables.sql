@@ -32,7 +32,7 @@ CREATE TABLE topic_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  muted boolean NOT NULL DEFAULT false,
+  muted boolean NOT NULL DEFAULT false, -- notifications muted yes/no
   date_subscribed bigint NOT NULL,
   subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
@@ -73,12 +73,14 @@ CREATE TABLE friend_requests (
   message text NOT NULL DEFAULT 'Let''s be friends!'
 );
 
+-- Remove from friend_requests, user_subscribers, friends, partners tables
 CREATE TABLE blocked (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
+-- Notifications
 CREATE TABLE user_subscribers (
   id text PRIMARY KEY,
   subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
