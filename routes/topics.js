@@ -31,7 +31,7 @@ module.exports = (app, pool) => {
       if (res2.rows.length === 0) {
         let path = '';
         if (req.file) {
-          path = req.file.path.substring(6); // Get rid of "public"
+          path = req.file.path.substring(7); // Get rid of "public/"
         } else {
           path = null;
         }

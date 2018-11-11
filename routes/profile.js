@@ -11,7 +11,7 @@ module.exports = (app, pool) => {
     const { bio, user_id } = req.body;
     let path = '';
     if (req.file) {
-      path = req.file.path.substring(6); // Get rid of "public"
+      path = req.file.path.substring(7); // Get rid of "public/"
     } else {
       path = null;
     }
