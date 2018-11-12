@@ -19,7 +19,7 @@ module.exports = (app, pool) => {
       try {
         let users, posts, partners, aliases;
         const { id } = req.params;
-        const { type } = req.query;
+        const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [users, posts, partners, aliases] = await Promise.all([
@@ -36,6 +36,18 @@ module.exports = (app, pool) => {
           throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
         }
 
+        // Only get likes for the posts retrieved, not likes from all time
+        const filter = [];
+        for (let i = 0; i < posts.rows.length; i++) {
+          filter.push(`post_id = '${posts.rows[i].id}'`);
+        }
+        let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${user_id}') ${filter.length > 0 ? `AND (${filter.join(' OR ')})` : ''}`);
+        // Convert to object that maps post_id to likes
+        post_likes = post_likes.rows.reduce((acc, post_like) => {
+          acc[post_like.post_id] = post_like;
+          return acc;
+        }, {});
+
         if (users.rows.length === 0) {
           res.status(200).send({
             success: false,
@@ -50,7 +62,8 @@ module.exports = (app, pool) => {
               aliases: aliases.rows,
               posts: {
                 offset: posts.rows.length,
-                data: posts.rows
+                data: posts.rows,
+                post_likes
               },
               partner: partners.rows.length === 0 ? null : partners.rows[0]
             }

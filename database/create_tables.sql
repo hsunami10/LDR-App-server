@@ -131,3 +131,15 @@ CREATE TABLE discover_searches (
   lowercase_search_term text NOT NULL UNIQUE, -- Use this to ignore case sensitivity
   num_searches bigint NOT NULL DEFAULT 0
 );
+
+CREATE TABLE post_likes (
+  id text PRIMARY KEY,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE
+);
+
+CREATE TABLE comment_likes (
+  id text PRIMARY KEY,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  comment_id text REFERENCES comments (id) ON UPDATE CASCADE ON DELETE CASCADE
+);

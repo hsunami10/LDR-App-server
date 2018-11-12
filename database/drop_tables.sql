@@ -1,3 +1,5 @@
+DROP TABLE comment_likes;
+DROP TABLE post_likes;
 DROP TABLE discover_searches;
 DROP TABLE comments;
 DROP TABLE posts;

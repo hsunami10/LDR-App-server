@@ -87,12 +87,35 @@ module.exports = (app, pool) => {
 
       let whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
       let pageFeedQuery = paginateFeed(whereQuery, order, direction, parseInt(offset), latestDate);
+
       console.log('page feed');
       console.log(pageFeedQuery);
+      const posts = await client.query(pageFeedQuery);
 
-      const res3 = await client.query(pageFeedQuery);
+      // Only get likes for the posts retrieved, not likes from all time
+      const filter = [];
+      for (let i = 0; i < posts.rows.length; i++) {
+        filter.push(`post_id = '${posts.rows[i].id}'`);
+      }
 
-      res.status(200).send(res3.rows);
+      if (filter.length === 0) {
+        res.status(200).send({
+          post_likes: {},
+          posts: posts.rows
+        })
+      } else {
+        let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${id}') AND (${filter.join(' OR ')})`);
+        // Convert to object that maps post_id to likes
+        post_likes = post_likes.rows.reduce((acc, post_like) => {
+          acc[post_like.post_id] = post_like;
+          return acc;
+        }, {});
+
+        res.status(200).send({
+          post_likes,
+          posts: posts.rows
+        });
+      }
     } finally {
       client.release();
     }
