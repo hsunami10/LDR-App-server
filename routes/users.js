@@ -51,12 +51,12 @@ module.exports = (app, pool) => {
         if (users.rows.length === 0) {
           res.status(200).send({
             success: false,
-            type: type
+            type
           });
         } else {
           res.status(200).send({
             success: true,
-            type: type,
+            type,
             user: {
               ...users.rows[0],
               aliases: aliases.rows,
