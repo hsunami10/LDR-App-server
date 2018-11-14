@@ -93,15 +93,19 @@ module.exports = (app, pool) => {
       const posts = await client.query(pageFeedQuery);
 
       // Only get likes for the posts retrieved, not likes from all time
-      const filter = [];
-      for (let i = 0; i < posts.rows.length; i++) {
-        filter.push(`post_id = '${posts.rows[i].id}'`);
+      const length = posts.rows.length;
+      const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
+      for (let i = 0; i < length; i++) {
+        filter[i] = `post_id = '${posts.rows[i].id}'`;
+        postsOrder[i] = posts.rows[i].id;
+        postsObj[posts.rows[i].id] = posts.rows[i];
       }
 
       if (filter.length === 0) {
         res.status(200).send({
           post_likes: {},
-          posts: posts.rows
+          posts: postsObj,
+          posts_order: postsOrder
         })
       } else {
         let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${id}') AND (${filter.join(' OR ')})`);
@@ -113,7 +117,8 @@ module.exports = (app, pool) => {
 
         res.status(200).send({
           post_likes,
-          posts: posts.rows
+          posts: postsObj,
+          posts_order: postsOrder
         });
       }
     } finally {
