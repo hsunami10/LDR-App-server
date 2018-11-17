@@ -105,7 +105,7 @@ module.exports = (app, pool) => {
         res.status(200).send({
           post_likes: {},
           posts: postsObj,
-          posts_order: postsOrder
+          order: postsOrder
         })
       } else {
         let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${id}') AND (${filter.join(' OR ')})`);
@@ -118,7 +118,7 @@ module.exports = (app, pool) => {
         res.status(200).send({
           post_likes,
           posts: postsObj,
-          posts_order: postsOrder
+          order: postsOrder
         });
       }
     } finally {

@@ -7,8 +7,8 @@ module.exports = (app, pool) => {
     .get(wrapper(async (req, res, next) => {
       // TODO: Get post + comments - for view post screen
       // TODO: Paginate with query params - for paginating comments
-      // req.params.id - user (or post?) id
-      // NOTE: Sort posts by: 'newest', 'popular', 'nearest'
+      // req.params.id - post id
+      // NOTE: Paginate comments
       /*
       example query
       SELECT  *
@@ -76,7 +76,8 @@ module.exports = (app, pool) => {
       }
     }))
     .delete(wrapper(async (req, res, next) => {
-      // TODO: Delete post
-      // req.params.id - user (or post?) id
+      const post_id = req.params.id;
+      await pool.query(`DELETE FROM posts WHERE id = '${post_id}'`);
+      res.sendStatus(200);
     }))
 };
