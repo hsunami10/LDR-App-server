@@ -46,29 +46,29 @@ module.exports = (app, pool) => {
       const client = await pool.connect();
       try {
         // req.params.id - user id
-        // req.body = { type: 'num_likes', 'body', data, post_id }
-        const { type, data, post_id } = req.body;
+        // req.body = { type: 'num_likes', 'body', data, post }
+        const { type, data, post } = req.body;
         const user_id = req.params.id;
 
         if (type === 'num_likes') {
-          const post_likes = await client.query(`SELECT id FROM post_likes WHERE user_id = '${user_id}' AND post_id = '${post_id}'`);
+          const post_likes = await client.query(`SELECT id FROM post_likes WHERE user_id = '${user_id}' AND post_id = '${post.id}'`);
 
           // If the user hasn't liked the post yet, increment num_likes and insert into post_likes table
           if (post_likes.rows.length === 0) {
-            const cols = [uuidv4(), user_id, post_id];
+            const cols = [uuidv4(), user_id, post.id];
             await Promise.all([
-              client.query(`UPDATE posts SET num_likes = num_likes + 1 WHERE id = '${post_id}'`),
+              client.query(`UPDATE posts SET num_likes = num_likes + 1 WHERE id = '${post.id}'`),
               client.query(`INSERT INTO post_likes (id, user_id, post_id) VALUES ($1, $2, $3)`, cols)
             ])
           } else { // Otherwise decremen num_likes and insert into post_likes table
             await Promise.all([
-              client.query(`UPDATE posts SET num_likes = num_likes - 1 WHERE id = '${post_id}'`),
-              client.query(`DELETE FROM post_likes WHERE post_id = '${post_id}' AND user_id = '${user_id}'`)
+              client.query(`UPDATE posts SET num_likes = num_likes - 1 WHERE id = '${post.id}'`),
+              client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
             ])
           }
           res.sendStatus(200);
-        } else {
-          await pool.query(`UPDATE posts SET ${type} = ${type === 'num_likes' ? data : `'${data}'`} WHERE id = '${post_id}'`);
+        } else { // type === 'body'
+          await pool.query(`UPDATE posts SET alias_id = '${post.alias_id}', body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);
           res.sendStatus(200);
         }
       } finally {

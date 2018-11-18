@@ -97,6 +97,7 @@ CREATE TABLE reports (
 );
 
 -- Dummy alias
+-- Removing from this table sets all posts with that alias_id to dummy alias (none)
 CREATE TABLE aliases (
   id text PRIMARY KEY,
   user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
