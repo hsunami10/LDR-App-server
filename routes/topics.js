@@ -22,6 +22,11 @@ module.exports = (app, pool) => {
       // req.params.id - topic id
     }))
 
+  app.get('/api/subscribed-topics/:id', wrapper(async (req, res, next) => {
+    const res2 = await pool.query(`SELECT topics.id, topics.name, topics.topic_pic, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${req.params.id}'`);
+    res.status(200).send(res2.rows);
+  }));
+
   app.post('/api/topics/create/:id', upload.single('clientImage'), wrapper(async (req, res, next) => {
     const client = await pool.connect();
     const date = moment().unix();
@@ -46,10 +51,8 @@ module.exports = (app, pool) => {
           topic: {
             id: topic_id,
             name,
-            lowercase_name: name.toLowerCase(),
             topic_pic: path,
-            description,
-            date_created: date
+            num_subscribers: 1
           },
           subscriber: {
             id: sub_id,

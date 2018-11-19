@@ -46,8 +46,8 @@ module.exports = (app, pool) => {
       const client = await pool.connect();
       try {
         // req.params.id - user id
-        // req.body = { type: 'num_likes', 'body', data, post }
-        const { type, data, post } = req.body;
+        // req.body = { type: 'num_likes' / 'body', post }
+        const { type, post } = req.body;
         const user_id = req.params.id;
 
         if (type === 'num_likes') {
