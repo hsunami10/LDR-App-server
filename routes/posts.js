@@ -52,19 +52,11 @@ module.exports = (app, pool) => {
 
         if (type === 'num_likes') {
           const post_likes = await client.query(`SELECT id FROM post_likes WHERE user_id = '${user_id}' AND post_id = '${post.id}'`);
-
-          // If the user hasn't liked the post yet, increment num_likes and insert into post_likes table
           if (post_likes.rows.length === 0) {
             const cols = [uuidv4(), user_id, post.id];
-            await Promise.all([
-              client.query(`UPDATE posts SET num_likes = num_likes + 1 WHERE id = '${post.id}'`),
-              client.query(`INSERT INTO post_likes (id, user_id, post_id) VALUES ($1, $2, $3)`, cols)
-            ])
-          } else { // Otherwise decremen num_likes and insert into post_likes table
-            await Promise.all([
-              client.query(`UPDATE posts SET num_likes = num_likes - 1 WHERE id = '${post.id}'`),
-              client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
-            ])
+            await client.query(`INSERT INTO post_likes (id, user_id, post_id) VALUES ($1, $2, $3)`, cols);
+          } else {
+            await client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`);
           }
           res.sendStatus(200);
         } else { // type === 'body'

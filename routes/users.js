@@ -48,7 +48,7 @@ module.exports = (app, pool) => {
 
         // Convert to object that maps post_id to likes
         post_likes = post_likes.rows.reduce((acc, post_like) => {
-          acc[post_like.post_id] = post_like;
+          acc[post_like.post_id] = true;
           return acc;
         }, {});
 

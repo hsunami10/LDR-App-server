@@ -113,8 +113,7 @@ CREATE TABLE posts (
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   location geography,
-  coordinates text, -- longitude latitude
-  num_likes integer NOT NULL DEFAULT 0 -- TODO: Get rid of this - inconsistent, SELECT COUNT(*) from post_likes table instead
+  coordinates text -- longitude latitude
 );
 
 CREATE TABLE comments (
@@ -122,8 +121,7 @@ CREATE TABLE comments (
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE,
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_sent bigint NOT NULL,
-  body text NOT NULL DEFAULT '',
-  num_likes integer NOT NULL DEFAULT 0
+  body text NOT NULL DEFAULT ''
 );
 
 CREATE TABLE discover_searches (

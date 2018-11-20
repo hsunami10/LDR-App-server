@@ -111,7 +111,7 @@ module.exports = (app, pool) => {
         let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${id}') AND (${filter.join(' OR ')})`);
         // Convert to object that maps post_id to likes
         post_likes = post_likes.rows.reduce((acc, post_like) => {
-          acc[post_like.post_id] = post_like;
+          acc[post_like.post_id] = true;
           return acc;
         }, {});
 
