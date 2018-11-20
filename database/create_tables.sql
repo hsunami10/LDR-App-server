@@ -114,7 +114,7 @@ CREATE TABLE posts (
   body text NOT NULL DEFAULT '',
   location geography,
   coordinates text, -- longitude latitude
-  num_likes integer NOT NULL DEFAULT 0
+  num_likes integer NOT NULL DEFAULT 0 -- TODO: Get rid of this - inconsistent, SELECT COUNT(*) from post_likes table instead
 );
 
 CREATE TABLE comments (

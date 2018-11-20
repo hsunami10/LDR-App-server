@@ -21,4 +21,4 @@ INSERT INTO users VALUES (
 INSERT INTO aliases VALUES ('', '', '', '');
 
 -- Create a dummy topic for posts that do not belong to a topic
-INSERT INTO topics VALUES ('', 'Global', 'global', 'images/topics/global.jpg', 'This topic is used for general posts, anything that does not fit in the other topics.', 0);
+-- INSERT INTO topics VALUES ('', 'Global', 'global', 'images/topics/global.jpg', 'This topic is used for general posts, anything that does not fit in the other topics.', 0);

@@ -23,7 +23,7 @@ module.exports = (app, pool) => {
     }))
 
   app.get('/api/subscribed-topics/:id', wrapper(async (req, res, next) => {
-    const res2 = await pool.query(`SELECT topics.id, topics.name, topics.topic_pic, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${req.params.id}'`);
+    const res2 = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${req.params.id}' ORDER BY topics.lowercase_name`);
     res.status(200).send(res2.rows);
   }));
 
@@ -51,16 +51,9 @@ module.exports = (app, pool) => {
           topic: {
             id: topic_id,
             name,
+            lowercase_name: name.toLowerCase(),
             topic_pic: path,
             num_subscribers: 1
-          },
-          subscriber: {
-            id: sub_id,
-            subscriber_id: req.params.id,
-            topic_id,
-            muted: false,
-            date_subscribed: date,
-            subscriber_type: 'admin'
           }
         });
       } else {
