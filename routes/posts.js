@@ -1,26 +1,20 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
+const paginateComments = require('../helpers/paginate').comments;
 
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
+    // Only call when loading or refreshing
     .get(wrapper(async (req, res, next) => {
-      // TODO: Get post + comments - for view post screen
-      // TODO: Paginate with query params - for paginating comments
-      // req.params.id - post id
-      // NOTE: Paginate comments
-      /*
-      example query
-      SELECT  *
-      FROM    ( SELECT    id, username, date_joined, ROW_NUMBER() OVER ( ORDER BY date_joined ) AS RowNum
-                FROM      users
-                WHERE     date_joined >= 0
-                AND id != ''
-              ) AS RowConstrainedResult
-      WHERE   RowNum >= 1
-          AND RowNum <= 20
-      ORDER BY RowNum
-       */
+      // type - newer, older
+      // If newer, then get the comments.date_sent > latestDate, limit 20
+      // If older, then call paginateComments
+      // Only older on first load
+      const { type, offset, latestDate, post_id } = req.query;
+      const user_id = req.params.id;
+      let query = '';
+      // TODO: Finish getting post and comments later
     }))
     .post(wrapper(async (req, res, next) => {
       const { topic_id, alias_id, body, coordinates } = req.body;
@@ -39,7 +33,8 @@ module.exports = (app, pool) => {
         date_posted: date,
         body,
         coordinates,
-        num_likes: 0
+        num_likes: 0,
+        num_comments: 0
       });
     }))
     .put(wrapper(async (req, res, next) => {
@@ -72,4 +67,64 @@ module.exports = (app, pool) => {
       await pool.query(`DELETE FROM posts WHERE id = '${post_id}'`);
       res.sendStatus(200);
     }))
+
+  // Similar to fetching feed
+  // Only call when paging - view previous comments
+  app.get('/api/posts/comments/:id', wrapper(async (req, res, next) => {
+    const client = await pool.connect();
+    try {
+      const { offset, latestDate, post_id } = req.query;
+      const user_id = req.params.id;
+      const comments = await client.query(paginateComments(post_id, parseInt(offset), latestDate));
+      const length = comments.rows.length;
+
+      let order = new Array(length), commentsObj = {};
+      for (let i = 0; i < length; i++) {
+        commentsObj[comments.rows[i].id] = comments.rows[i];
+        order[length - i - 1] = comments.rows[i].id; // Want latest element to be at bottom of screen, not top
+      }
+
+      if (order.length === 0) {
+        res.status(200).send({
+          comment_likes: {},
+          comments: commentsObj,
+          order
+        });
+      } else {
+        let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
+        // Convert to object that maps post_id to likes
+        comment_likes = comment_likes.rows.reduce((acc, comment_like) => {
+          acc[comment_like.comment_id] = true;
+          return acc;
+        }, {});
+
+        res.status(200).send({
+          comment_likes,
+          comments: commentsObj,
+          order
+        });
+      }
+    } finally {
+      client.release();
+    }
+  }));
+
+  // Create comments
+  app.post('/api/posts/comments/:id', wrapper(async (req, res, next) => {
+    const user_id = req.params.id;
+    const { body, postID } = req.body;
+    const comment_id = uuidv4();
+    const date_sent = moment().unix();
+    const cols = [comment_id, postID, user_id, date_sent, body];
+    await pool.query(`INSERT INTO comments VALUES ($1, $2, $3, $4, $5)`, cols);
+    // TODO: Change format to match paginateComments query format
+    // id, post_id, author_id, username, profile_pic, date_sent, body, num_likes
+    res.status(200).send({
+      id: comment_id,
+      post_id: postID,
+      author_id: user_id,
+      date_sent,
+      body
+    });
+  }));
 };

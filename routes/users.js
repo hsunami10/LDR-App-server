@@ -44,7 +44,7 @@ module.exports = (app, pool) => {
           postsOrder[i] = posts.rows[i].id;
           postsObj[posts.rows[i].id] = posts.rows[i];
         }
-        let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${user_id}') ${filter.length > 0 ? `AND (${filter.join(' OR ')})` : ''}`);
+        let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE (user_id = '${user_id}') ${filter.length > 0 ? `AND (${filter.join(' OR ')})` : ''}`);
 
         // Convert to object that maps post_id to likes
         post_likes = post_likes.rows.reduce((acc, post_like) => {

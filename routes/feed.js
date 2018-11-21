@@ -21,7 +21,6 @@ module.exports = (app, pool) => {
       // order - newest (default) - date_joined, popular - num_likes, nearest - coordinates
       // direction - newest (default) - DESC, popular - DESC, nearest - ASC (or something else)
       const { offset, order, direction, latestDate } = req.query;
-      console.log(req.query);
 
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
@@ -108,7 +107,7 @@ module.exports = (app, pool) => {
           order: postsOrder
         })
       } else {
-        let post_likes = await client.query(`SELECT id, post_id FROM post_likes WHERE (user_id = '${id}') AND (${filter.join(' OR ')})`);
+        let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE user_id = '${id}' AND (${filter.join(' OR ')})`);
         // Convert to object that maps post_id to likes
         post_likes = post_likes.rows.reduce((acc, post_like) => {
           acc[post_like.post_id] = true;
