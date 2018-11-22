@@ -5,16 +5,15 @@ const paginateComments = require('../helpers/paginate').comments;
 
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
-    // Only call when loading or refreshing
+    // Only call when refreshing
     .get(wrapper(async (req, res, next) => {
-      // type - newer, older
-      // If newer, then get the comments.date_sent > latestDate, limit 20
-      // If older, then call paginateComments
-      // Only older on first load
-      const { type, offset, latestDate, post_id } = req.query;
+      const { offset, latestDate, post_id } = req.query;
       const user_id = req.params.id;
       let query = '';
       // TODO: Finish getting post and comments later
+      // NOTE: Make sure post and comment JSON format are the same
+      // Get the comments.date_sent > latestDate, until the end (no limit)
+      // NOTE: When a post is changed (num_likes, edited, body), you want to find every instance of that post and change it
     }))
     .post(wrapper(async (req, res, next) => {
       const { topic_id, alias_id, body, coordinates } = req.body;

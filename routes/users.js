@@ -70,7 +70,9 @@ module.exports = (app, pool) => {
                 order: postsOrder,
                 post_likes
               },
-              partner: partners.rows.length === 0 ? null : partners.rows[0]
+              partner: partners.rows.length === 0 ? null : partners.rows[0],
+              initial_loading: false,
+              refreshing: false
             }
           });
         }
