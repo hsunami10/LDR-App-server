@@ -68,13 +68,13 @@ module.exports = (app, pool) => {
     }))
 
   // Similar to fetching feed
-  // Only call when paging - view previous comments
+  // Only call when paging - view previous comments and initial retrieval
   app.get('/api/posts/comments/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
-      const { offset, latestDate, post_id } = req.query;
+      const { offset, latest_date, post_id } = req.query;
       const user_id = req.params.id;
-      const comments = await client.query(paginateComments(post_id, parseInt(offset), latestDate));
+      const comments = await client.query(paginateComments(post_id, parseInt(offset), latest_date));
       const length = comments.rows.length;
 
       let order = new Array(length), commentsObj = {};
@@ -87,7 +87,8 @@ module.exports = (app, pool) => {
         res.status(200).send({
           comment_likes: {},
           comments: commentsObj,
-          order
+          order,
+          offset: parseInt(offset, 10) + order.length
         });
       } else {
         let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
@@ -100,7 +101,8 @@ module.exports = (app, pool) => {
         res.status(200).send({
           comment_likes,
           comments: commentsObj,
-          order
+          order,
+          offset: parseInt(offset, 10) + order.length
         });
       }
     } finally {
