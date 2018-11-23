@@ -1,19 +1,40 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
-const paginateComments = require('../helpers/paginate').comments;
+const pageCommentsQuery = require('../helpers/paginate').comments;
+const fetchComments = require('../helpers/queries').fetchComments;
 
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
     // Only call when refreshing
     .get(wrapper(async (req, res, next) => {
-      const { offset, earliest_date, post_id } = req.query;
-      const user_id = req.params.id;
-      let query = '';
-      // TODO: Finish getting post and comments later
-      // NOTE: Make sure post and comment JSON format are the same
-      // Get the comments.date_sent >= earliestDate, until the end (no limit)
-      // NOTE: When a post is changed (num_likes, edited, body), you want to find every instance of that post and change it
+      const client = await pool.connect();
+      try {
+        const { earliest_date, post_id } = req.query;
+        const user_id = req.params.id;
+
+        // Get post
+        // NOTE: Match format of helpers/paginate.posts & helpers/paginate.feed query
+        const postsQuery = `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.alias_id, aliases.alias, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments FROM posts INNER JOIN users ON users.id = posts.author_id INNER JOIN topics ON posts.topic_id = topics.id INNER JOIN aliases ON posts.alias_id = aliases.id WHERE posts.id = '${post_id}'`;
+        const postRes = await client.query(postsQuery);
+
+        // Get comments
+        // NOTE: Match format of helpers/paginate.comments query
+        let commentsQuery = '';
+        if (parseInt(earliest_date, 10) === 0) { // True only if no comments when refreshing
+          commentsQuery = pageCommentsQuery(post_id, 0, moment().unix());
+        } else {
+          commentsQuery = `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON users.id = comments.author_id WHERE comments.date_sent >= ${earliest_date} AND comments.post_id = '${post_id}'`;
+        }
+        const comments = await fetchComments(client, user_id, 0, commentsQuery);
+
+        res.status(200).send({
+          post: postRes.rows[0],
+          comments
+        });
+      } finally {
+        client.release();
+      }
     }))
     .post(wrapper(async (req, res, next) => {
       const { topic_id, alias_id, body, coordinates } = req.body;
@@ -74,38 +95,13 @@ module.exports = (app, pool) => {
     try {
       const { offset, latest_date, post_id } = req.query;
       const user_id = req.params.id;
-      const comments = await client.query(paginateComments(post_id, parseInt(offset), latest_date));
-      const length = comments.rows.length;
-
-      let order = new Array(length), commentsObj = {};
-      for (let i = 0; i < length; i++) {
-        commentsObj[comments.rows[i].id] = comments.rows[i];
-        order[length - i - 1] = comments.rows[i].id; // Want latest element to be at bottom of screen, not top
-      }
-
-      const newOffset = parseInt(offset, 10) + order.length;
-      if (order.length === 0) {
-        res.status(200).send({
-          comment_likes: {},
-          comments: commentsObj,
-          order,
-          offset: newOffset
-        });
-      } else {
-        let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
-        // Convert to object that maps post_id to likes
-        comment_likes = comment_likes.rows.reduce((acc, comment_like) => {
-          acc[comment_like.comment_id] = true;
-          return acc;
-        }, {});
-
-        res.status(200).send({
-          comment_likes,
-          comments: commentsObj,
-          order,
-          offset: newOffset
-        });
-      }
+      const result = await fetchComments(
+        client,
+        user_id,
+        offset,
+        pageCommentsQuery(post_id, parseInt(offset), latest_date)
+      );
+      res.status(200).send(result);
     } finally {
       client.release();
     }
@@ -119,7 +115,7 @@ module.exports = (app, pool) => {
     const date_sent = moment().unix();
     const cols = [comment_id, postID, user_id, date_sent, body];
     await pool.query(`INSERT INTO comments VALUES ($1, $2, $3, $4, $5)`, cols);
-    // TODO: Change format to match paginateComments query format
+    // TODO: Change format to match pageCommentsQuery query format
     // id, post_id, author_id, username, profile_pic, date_sent, body, num_likes
     res.status(200).send({
       id: comment_id,

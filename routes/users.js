@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const paginatePosts = require('../helpers/paginate').posts;
+const pagePostsQuery = require('../helpers/paginate').posts;
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
@@ -24,7 +24,7 @@ module.exports = (app, pool) => {
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [users, posts, partners, aliases] = await Promise.all([
             client.query(`SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-            client.query(paginatePosts(id, 'date_posted', 'DESC', 0)),
+            client.query(pagePostsQuery(id, 'date_posted', 'DESC', 0)),
             client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
             client.query(getUserAliases(id))
           ]);

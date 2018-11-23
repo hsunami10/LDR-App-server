@@ -2,7 +2,7 @@ const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
 const getUserAliases = require('../helpers/queries').getUserAliases;
-const paginateFeed = require('../helpers/paginate').feed;
+const pageFeedQuery = require('../helpers/paginate').feed;
 
 module.exports = (app, pool) => {
   app.get('/api/feed/:id', wrapper(async (req, res, next) => {
@@ -20,7 +20,7 @@ module.exports = (app, pool) => {
       const { id } = req.params;
       // order - newest (default) - date_joined, popular - num_likes, nearest - coordinates
       // direction - newest (default) - DESC, popular - DESC, nearest - ASC (or something else)
-      const { offset, order, direction, latestDate } = req.query;
+      const { offset, order, direction, latest_date } = req.query;
 
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
@@ -85,11 +85,11 @@ module.exports = (app, pool) => {
       if (topicQuery === '()') topicQuery = '(false)'; // If no subscribed topics, default to false - because in OR
 
       let whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
-      let pageFeedQuery = paginateFeed(whereQuery, order, direction, parseInt(offset), latestDate);
+      let feedQuery = pageFeedQuery(whereQuery, order, direction, parseInt(offset), latest_date);
 
       console.log('page feed');
-      console.log(pageFeedQuery);
-      const posts = await client.query(pageFeedQuery);
+      console.log(feedQuery);
+      const posts = await client.query(feedQuery);
 
       // Only get likes for the posts retrieved, not likes from all time
       const length = posts.rows.length;
