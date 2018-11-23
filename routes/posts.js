@@ -7,12 +7,12 @@ module.exports = (app, pool) => {
   app.route('/api/posts/:id')
     // Only call when refreshing
     .get(wrapper(async (req, res, next) => {
-      const { offset, latestDate, post_id } = req.query;
+      const { offset, earliest_date, post_id } = req.query;
       const user_id = req.params.id;
       let query = '';
       // TODO: Finish getting post and comments later
       // NOTE: Make sure post and comment JSON format are the same
-      // Get the comments.date_sent > latestDate, until the end (no limit)
+      // Get the comments.date_sent >= earliestDate, until the end (no limit)
       // NOTE: When a post is changed (num_likes, edited, body), you want to find every instance of that post and change it
     }))
     .post(wrapper(async (req, res, next) => {
@@ -83,12 +83,13 @@ module.exports = (app, pool) => {
         order[length - i - 1] = comments.rows[i].id; // Want latest element to be at bottom of screen, not top
       }
 
+      const newOffset = parseInt(offset, 10) + order.length;
       if (order.length === 0) {
         res.status(200).send({
           comment_likes: {},
           comments: commentsObj,
           order,
-          offset: parseInt(offset, 10) + order.length
+          offset: newOffset
         });
       } else {
         let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
@@ -102,7 +103,7 @@ module.exports = (app, pool) => {
           comment_likes,
           comments: commentsObj,
           order,
-          offset: parseInt(offset, 10) + order.length
+          offset: newOffset
         });
       }
     } finally {
@@ -125,7 +126,8 @@ module.exports = (app, pool) => {
       post_id: postID,
       author_id: user_id,
       date_sent,
-      body
+      body,
+      num_likes: 0
     });
   }));
 };
