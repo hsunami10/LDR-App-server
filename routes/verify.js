@@ -44,7 +44,7 @@ module.exports = (app, pool) => {
     const client = await pool.connect();
     try {
       // Check if there's an existing user with the email
-      const res2 = await client.query(`SELECT id, email_verified FROM users WHERE email = '${email}'`);
+      const res2 = await client.query(`SELECT id, email_verified, token_time FROM users WHERE email = '${email}'`);
       if (res2.rows.length === 0) { // No existing email
         // QUESTION: Do I even need this check here?
         const res3 = await client.query(`SELECT email, email_verified FROM users WHERE id = '${id}'`);
@@ -57,6 +57,8 @@ module.exports = (app, pool) => {
         if (res2.rows[0].id === id) { // If the email exists and the same user requesting
           if (res2.rows[0].email_verified) {
             res.status(200).send({ msg: 'Email address already verified' });
+          } else if (moment().unix() - res2.rows[0].token_time < thirtyMin) {
+            res.status(200).send({ msg: 'Verification email already sent' });
           } else {
             sendEmail(client, data, res, successMessage, { linkID, id, email });
           }
@@ -76,8 +78,8 @@ module.exports = (app, pool) => {
       const res2 = await client.query(`SELECT token_time FROM users WHERE token = '${req.params.id}'`);
       if (res2.rows.length === 0) {
         res.send('Oops! This link has expired. You will see a "link expired" page here.');
-      } else if (res2.rows[0].token_time - now < thirtyMin) {
-        await client.query(`UPDATE users SET email_verified = ${true} WHERE token = '${req.params.id}'`);
+      } else if (now - res2.rows[0].token_time < thirtyMin) {
+        await client.query(`UPDATE users SET email_verified = ${true}, token = null WHERE token = '${req.params.id}'`);
         res.send('Email Verified!');
       } else {
         res.send('Oops! This link has expired. You will see a "link expired" page here.');
