@@ -29,6 +29,7 @@ app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'
 
 // ==================================== API Endpoints / Routes ====================================
 require('./routes/authentication')(app, pool);
+require('./routes/comments')(app, pool);
 require('./routes/feed')(app, pool);
 require('./routes/posts')(app, pool);
 require('./routes/profile')(app, pool);

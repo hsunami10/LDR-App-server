@@ -21,7 +21,7 @@ const fetchComments = async (client, user_id, offset, queryString) => {
     };
   } else {
     let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
-    // Convert to object that maps post_id to likes
+    // Convert to object that maps comment_ids to likes
     comment_likes = comment_likes.rows.reduce((acc, comment_like) => {
       acc[comment_like.comment_id] = true;
       return acc;

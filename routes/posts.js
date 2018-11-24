@@ -87,43 +87,4 @@ module.exports = (app, pool) => {
       await pool.query(`DELETE FROM posts WHERE id = '${post_id}'`);
       res.sendStatus(200);
     }))
-
-  // Similar to fetching feed
-  // Only call when paging - view previous comments and initial retrieval
-  app.get('/api/posts/comments/:id', wrapper(async (req, res, next) => {
-    const client = await pool.connect();
-    try {
-      const { offset, latest_date, post_id } = req.query;
-      const user_id = req.params.id;
-      const result = await fetchComments(
-        client,
-        user_id,
-        offset,
-        pageCommentsQuery(post_id, parseInt(offset), latest_date)
-      );
-      res.status(200).send(result);
-    } finally {
-      client.release();
-    }
-  }));
-
-  // Create comments
-  app.post('/api/posts/comments/:id', wrapper(async (req, res, next) => {
-    const user_id = req.params.id;
-    const { body, postID } = req.body;
-    const comment_id = uuidv4();
-    const date_sent = moment().unix();
-    const cols = [comment_id, postID, user_id, date_sent, body];
-    await pool.query(`INSERT INTO comments VALUES ($1, $2, $3, $4, $5)`, cols);
-    // TODO: Change format to match pageCommentsQuery query format
-    // id, post_id, author_id, username, profile_pic, date_sent, body, num_likes
-    res.status(200).send({
-      id: comment_id,
-      post_id: postID,
-      author_id: user_id,
-      date_sent,
-      body,
-      num_likes: 0
-    });
-  }));
 };
