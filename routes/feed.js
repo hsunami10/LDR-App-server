@@ -1,7 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../helpers/wrapper');
-const getUserAliases = require('../helpers/queries').getUserAliases;
 const pageFeedQuery = require('../helpers/paginate').feed;
 
 module.exports = (app, pool) => {
@@ -13,8 +12,6 @@ module.exports = (app, pool) => {
     // Get your posts - where author_id = user_id
 
     // Get friends' ids
-
-    // Get partner's posts - only include alias_id = '' (no alias posts)
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -46,7 +43,7 @@ module.exports = (app, pool) => {
             } else {
               partnerID = row.user1_id;
             }
-            partnerQuery = `(posts.author_id = '${partnerID}' AND posts.alias_id = '')`;
+            partnerQuery = `(posts.author_id = '${partnerID}')`;
             break;
           case 'friends': // Outermost OR - because if this is true, then you ALWAYS want to get the post - result expression = TRUE
             let friendID = ''

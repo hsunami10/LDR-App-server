@@ -3,7 +3,6 @@ DROP TABLE post_likes;
 DROP TABLE discover_searches;
 DROP TABLE comments;
 DROP TABLE posts;
-DROP TABLE aliases;
 DROP TABLE reports;
 DROP TABLE user_subscribers;
 DROP TABLE blocked;

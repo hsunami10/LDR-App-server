@@ -15,9 +15,6 @@ const generateMessage = type => {
     case 'posts':
       msg = 'This post' + msg;
       break;
-    case 'aliases':
-      msg = 'This alias' + msg;
-      break;
     default:
       break;
   }

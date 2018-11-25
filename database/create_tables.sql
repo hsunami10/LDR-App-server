@@ -96,20 +96,10 @@ CREATE TABLE reports (
   date_sent bigint NOT NULL
 );
 
--- Dummy alias
--- Removing from this table sets all posts with that alias_id to dummy alias (none)
-CREATE TABLE aliases (
-  id text PRIMARY KEY,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  alias text NOT NULL UNIQUE,
-  lowercase_alias text NOT NULL UNIQUE
-);
-
 CREATE TABLE posts (
   id text PRIMARY KEY,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  alias_id text REFERENCES aliases (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Can be , then use author_id (username)
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   location geography,

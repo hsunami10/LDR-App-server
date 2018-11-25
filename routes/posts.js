@@ -15,7 +15,7 @@ module.exports = (app, pool) => {
 
         // Get post
         // NOTE: Match format of helpers/paginate.posts & helpers/paginate.feed query
-        const postsQuery = `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.alias_id, aliases.alias, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments FROM posts INNER JOIN users ON users.id = posts.author_id INNER JOIN topics ON posts.topic_id = topics.id INNER JOIN aliases ON posts.alias_id = aliases.id WHERE posts.id = '${post_id}'`;
+        const postsQuery = `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments FROM posts INNER JOIN users ON users.id = posts.author_id INNER JOIN topics ON posts.topic_id = topics.id WHERE posts.id = '${post_id}'`;
         const postRes = await client.query(postsQuery);
 
         // Get comments
@@ -37,19 +37,18 @@ module.exports = (app, pool) => {
       }
     }))
     .post(wrapper(async (req, res, next) => {
-      const { topic_id, alias_id, body, coordinates } = req.body;
+      const { topic_id, body, coordinates } = req.body;
       const post_id = uuidv4();
       const date = moment().unix();
-      const cols = [post_id, topic_id, req.params.id, alias_id, date, body, coordinates]
-      const res2 = await pool.query(`INSERT INTO posts (id, topic_id, author_id, alias_id, date_posted, body, coordinates) VALUES ($1, $2, $3, $4, $5, $6, $7)`, cols);
+      const cols = [post_id, topic_id, req.params.id, date, body, coordinates]
+      const res2 = await pool.query(`INSERT INTO posts (id, topic_id, author_id, date_posted, body, coordinates) VALUES ($1, $2, $3, $4, $5, $6)`, cols);
 
       // NOTE: Keep same format as paginate.js posts query, except rowNum
-      // id, topic_id, author_id, alias_id, date_posted, body, coordinates, num_likes
+      // id, topic_id, author_id, date_posted, body, coordinates, num_likes
       res.status(200).send({
         id: post_id,
         topic_id,
         author_id: req.params.id,
-        alias_id,
         date_posted: date,
         body,
         coordinates,
@@ -75,7 +74,7 @@ module.exports = (app, pool) => {
           }
           res.sendStatus(200);
         } else { // type === 'body'
-          await pool.query(`UPDATE posts SET alias_id = '${post.alias_id}', body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);
+          await pool.query(`UPDATE posts SET body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);
           res.sendStatus(200);
         }
       } finally {

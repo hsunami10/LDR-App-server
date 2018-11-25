@@ -7,7 +7,6 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const getUserAliases = require('../helpers/queries').getUserAliases;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
@@ -17,21 +16,20 @@ module.exports = (app, pool) => {
       // "edit" - get the rest of the data needed for profile management
       const client = await pool.connect();
       try {
-        let users, posts, partners, aliases;
+        let users, posts, partners;
         const { id } = req.params;
         const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
           // Get friends and subscribers when the tabs (in view profile screen) are visited
-          [users, posts, partners, aliases] = await Promise.all([
+          [users, posts, partners] = await Promise.all([
             client.query(`SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${id}'`),
             client.query(pagePostsQuery(id, 'date_posted', 'DESC', 0)),
-            client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`),
-            client.query(getUserAliases(id))
+            client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
           ]);
         } else if (type === 'edit') {
           console.log('get rest of profile needed to edit - more private information');
         } else if (type === 'partner') {
-          console.log('get partner\'s profile - hide posts that have aliases');
+          console.log('get partner\'s profile');
         } else {
           throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
         }
@@ -63,7 +61,6 @@ module.exports = (app, pool) => {
             type,
             user: {
               ...users.rows[0],
-              aliases: aliases.rows,
               posts: {
                 offset: length,
                 data: postsObj,
@@ -125,10 +122,4 @@ module.exports = (app, pool) => {
     .delete(wrapper(async (req, res, next) => {
       res.send('delete user with user id: ' + req.params.id);
     }))
-
-  app.get('/api/user/alias/:id', wrapper(async (req, res, next) => {
-    // NOTE: Same query as above
-    const res2 = await pool.query(getUserAliases(req.params.id));
-    res.status(200).send(res2.rows);
-  }))
 };

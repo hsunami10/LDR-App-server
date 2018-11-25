@@ -1,6 +1,3 @@
-// Regular queries used in multiple areas
-const getUserAliases = id => `SELECT id, alias FROM aliases WHERE user_id = '${id}' ORDER BY alias DESC`; // Alphabetical order
-
 const fetchComments = async (client, user_id, offset, queryString) => {
   const comments = await client.query(queryString);
   const length = comments.rows.length;
@@ -36,6 +33,5 @@ const fetchComments = async (client, user_id, offset, queryString) => {
 }
 
 module.exports = {
-  getUserAliases,
   fetchComments
 }
