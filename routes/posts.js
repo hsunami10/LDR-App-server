@@ -72,11 +72,10 @@ module.exports = (app, pool) => {
           } else {
             await client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`);
           }
-          res.sendStatus(200);
         } else { // type === 'body'
-          await pool.query(`UPDATE posts SET body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);
-          res.sendStatus(200);
+          await client.query(`UPDATE posts SET body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);
         }
+        res.sendStatus(200);
       } finally {
         client.release();
       }

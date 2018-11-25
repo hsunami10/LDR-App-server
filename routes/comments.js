@@ -44,8 +44,25 @@ module.exports = (app, pool) => {
       });
     }))
     .put(wrapper(async (req, res, next) => {
-      // TODO: Finish this later - edit commments - liking and changing body
-      res.sendStatus(200);
+      const client = await pool.connect();
+      try {
+        const user_id = req.params.id;
+        const { type, comment } = req.body;
+        if (type === 'num_likes') {
+          const comment_likes = await client.query(`SELECT id FROM comment_likes WHERE user_id = '${user_id}' AND comment_id = '${comment.id}'`);
+          if (comment_likes.rows.length === 0) {
+            const cols = [uuidv4(), user_id, comment.id];
+            await client.query(`INSERT INTO comment_likes (id, user_id, comment_id) VALUES ($1, $2, $3)`, cols);
+          } else {
+            await client.query(`DELETE FROM comment_likes WHERE user_id = '${user_id}' AND comment_id = '${comment.id}'`);
+          }
+        } else {
+          await client.query(`UPDATE comments SET body = '${comment.body}' WHERE id = '${comment.id}'`);
+        }
+        res.sendStatus(200);
+      } finally {
+        client.release();
+      }
     }))
     .delete(wrapper(async (req, res, next) => {
       const comment_id = req.params.id;
