@@ -73,19 +73,11 @@ CREATE TABLE friend_requests (
   message text NOT NULL DEFAULT 'Let''s be friends!'
 );
 
--- Remove from friend_requests, user_subscribers, friends, partners tables
+-- Remove from friend_requests, friends, partners tables
 CREATE TABLE blocked (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE
-);
-
--- Notifications
-CREATE TABLE user_subscribers (
-  id text PRIMARY KEY,
-  subscriber_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_subscribed bigint NOT NULL
 );
 
 CREATE TABLE reports (

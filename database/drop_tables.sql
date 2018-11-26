@@ -4,7 +4,6 @@ DROP TABLE discover_searches;
 DROP TABLE comments;
 DROP TABLE posts;
 DROP TABLE reports;
-DROP TABLE user_subscribers;
 DROP TABLE blocked;
 DROP TABLE friend_requests;
 DROP TABLE friends;
