@@ -1,12 +1,15 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const pagePostsQuery = require('../helpers/paginate').posts;
 const wrapper = require('../helpers/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
+
+const pagePostsQuery = require('../helpers/paginate').posts;
+const pageInteractionsQuery = require('../helpers/paginate').interactions;
+const pageFeedQuery = require('../helpers/paginate').feed;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
@@ -16,22 +19,24 @@ module.exports = (app, pool) => {
       // "edit" - get the rest of the data needed for profile management
       const client = await pool.connect();
       try {
-        let users, posts, partners;
-        const { id } = req.params;
+        let users, posts, interactions, friends;
+        const targetID = req.params.id;
         const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
+          const usersQuery = `SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
+          const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
+          const interactionsQuery = pageInteractionsQuery(targetID, 0);
+          const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
+
           // Get friends and subscribers when the tabs (in view profile screen) are visited
-          [users, posts, partners] = await Promise.all([
-            client.query(`SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${id}'`),
-            client.query(pagePostsQuery(id, 'date_posted', 'DESC', 0)),
-            client.query(`SELECT user1_id, user2_id, date_together, countdown FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}'`)
+          [users, posts, interactions, friends] = await Promise.all([
+            client.query(usersQuery),
+            client.query(postsQuery),
+            client.query(interactionsQuery),
+            client.query(friendsQuery)
           ]);
-        } else if (type === 'edit') {
-          console.log('get rest of profile needed to edit - more private information');
-        } else if (type === 'partner') {
-          console.log('get partner\'s profile');
         } else {
-          throw new Error('get: /api/user, type has to be either "private", "public", or "edit"');
+          throw new Error('get: /api/user, type has to be either "private", "public"');
         }
 
         // Only get likes for the posts retrieved, not likes from all time
@@ -43,12 +48,14 @@ module.exports = (app, pool) => {
           postsObj[posts.rows[i].id] = posts.rows[i];
         }
         let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE (user_id = '${user_id}') ${filter.length > 0 ? `AND (${filter.join(' OR ')})` : ''}`);
-
         // Convert to object that maps post_id to likes
         post_likes = post_likes.rows.reduce((acc, post_like) => {
           acc[post_like.post_id] = true;
           return acc;
         }, {});
+
+        console.log(interactions.rows);
+        console.log(friends.rows);
 
         if (users.rows.length === 0) {
           res.status(200).send({
@@ -67,7 +74,6 @@ module.exports = (app, pool) => {
                 order: postsOrder,
                 post_likes
               },
-              partner: partners.rows.length === 0 ? null : partners.rows[0],
               initial_loading: false,
               refreshing: false
             }

@@ -47,8 +47,13 @@ const comments = (postID , offset, latestDate) => (
   `SELECT * FROM (SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON comments.author_id = users.id WHERE ${offset === 0 ? '' : `comments.date_sent <= ${latestDate} AND`} comments.post_id = '${postID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + commentsLimit} ORDER BY RowNum`
 );
 
+const interactions = (userID, offset) => (
+  `SELECT * FROM (SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments, ROW_NUMBER () OVER (ORDER BY interactions.date_updated DESC) AS RowNum FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE interactions.user_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+);
+
 module.exports = {
   posts,
   feed,
-  comments
+  comments,
+  interactions
 };

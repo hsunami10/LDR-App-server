@@ -64,13 +64,36 @@ module.exports = (app, pool) => {
         const { type, post } = req.body;
         const user_id = req.params.id;
 
+        // If liking / disliking post
         if (type === 'num_likes') {
-          const post_likes = await client.query(`SELECT id FROM post_likes WHERE user_id = '${user_id}' AND post_id = '${post.id}'`);
-          if (post_likes.rows.length === 0) {
+          let post_likes, interactions;
+          [post_likes, interactions] = await Promise.all([
+            client.query(`SELECT id FROM post_likes WHERE user_id = '${user_id}' AND post_id = '${post.id}'`),
+            client.query(`SELECT count FROM interactions WHERE user_id = '${user_id}' AND post_id = '${post.id}'`)
+          ]);
+          if (post_likes.rows.length === 0) { // If haven't liked before, then like the post
+            // NOTE: Similar to adding comments endpoint
             const cols = [uuidv4(), user_id, post.id];
-            await client.query(`INSERT INTO post_likes (id, user_id, post_id) VALUES ($1, $2, $3)`, cols);
-          } else {
-            await client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`);
+            const date = moment().unix();
+            const cols2 = [uuidv4(), user_id, post.id, date];
+            await Promise.all([
+              client.query(`INSERT INTO post_likes (id, user_id, post_id) VALUES ($1, $2, $3)`, cols), // Mark post as liked
+              client.query(`INSERT INTO interactions (id, user_id, post_id, date_updated) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, post_id) DO UPDATE SET date_updated = ${date}, count = interactions.count + 1 WHERE interactions.user_id = '${user_id}' AND interactions.post_id = '${post.id}'`, cols2) // Add as interaction
+            ]);
+          } else { // NOTE: Similar to deleting comments
+            if (interactions.rows.length === 0) {
+              await client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`);
+            } else if (interactions.rows[0].count > 1) { // If not last interaction, then decrement counts
+              await Promise.all([
+                client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`),
+                client.query(`UPDATE interactions SET count = count - 1 WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+              ]);
+            } else { // If last interaction, then remove from interactions
+              await Promise.all([
+                client.query(`DELETE FROM post_likes WHERE post_id = '${post.id}' AND user_id = '${user_id}'`),
+                client.query(`DELETE FROM interactions WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+              ]);
+            }
           }
         } else { // type === 'body'
           await client.query(`UPDATE posts SET body = '${post.body}', topic_id = '${post.topic_id}' WHERE id = '${post.id}'`);

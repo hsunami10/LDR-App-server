@@ -22,29 +22,19 @@ module.exports = (app, pool) => {
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
       const filterQuery = [
-        `(SELECT user1_id, user2_id, 'partners' FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get partner
         `(SELECT user1_id, user2_id, 'friends' FROM friends WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get friends
         `(SELECT user1_id, user2_id, 'blocked' FROM blocked WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get blocked users
         `(SELECT id, topic_id, 'topics' FROM topic_subscribers WHERE subscriber_id = '${id}')` // Get topics the user is subscribed to
-      ].join(' UNION ALL ');
+      ].join(' UNION '); // QUESTION: UNION ALL - does not remove duplicates, UNION - removes duplicates?
 
       const res2 = await client.query(filterQuery);
       const filterRows = res2.rows;
       console.log(filterRows);
 
-      let partnerQuery = '(false)', friendArr = [], blockedArr = [], topicArr = [];
+      let friendArr = [], blockedArr = [], topicArr = [];
       for (let i = 0, len = filterRows.length; i < len; i++) {
         let row = filterRows[i];
         switch (row['?column?']) {
-          case 'partners': // Outermost OR - because if this is true, then you ALWAYS want to get the post - result expression = TRUE
-            let partnerID = ''
-            if (row.user1_id === id) {
-              partnerID = row.user2_id;
-            } else {
-              partnerID = row.user1_id;
-            }
-            partnerQuery = `(posts.author_id = '${partnerID}')`;
-            break;
           case 'friends': // Outermost OR - because if this is true, then you ALWAYS want to get the post - result expression = TRUE
             let friendID = ''
             if (row.user1_id === id) {
@@ -81,7 +71,7 @@ module.exports = (app, pool) => {
       let topicQuery = `(${topicArr.join(' OR ')})`;
       if (topicQuery === '()') topicQuery = '(false)'; // If no subscribed topics, default to false - because in OR
 
-      let whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
+      let whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${friendQuery} OR ${topicQuery}))`;
       let feedQuery = pageFeedQuery(whereQuery, order, direction, parseInt(offset), latest_date);
 
       console.log('page feed');

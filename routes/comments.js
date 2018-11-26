@@ -26,22 +26,33 @@ module.exports = (app, pool) => {
     }))
     .post(wrapper(async (req, res, next) => {
       // TODO: Finish this later - add comments
-      const user_id = req.params.id;
-      const { body, postID } = req.body;
-      const comment_id = uuidv4();
-      const date_sent = moment().unix();
-      const cols = [comment_id, postID, user_id, date_sent, body];
-      await pool.query(`INSERT INTO comments VALUES ($1, $2, $3, $4, $5)`, cols);
-      // TODO: Change format to match pageCommentsQuery query format
-      // id, post_id, author_id, username, profile_pic, date_sent, body, num_likes
-      res.status(200).send({
-        id: comment_id,
-        post_id: postID,
-        author_id: user_id,
-        date_sent,
-        body,
-        num_likes: 0
-      });
+      const client = await pool.connect();
+      try {
+        const user_id = req.params.id;
+        const { body, postID } = req.body;
+        const comment_id = uuidv4();
+        const date_sent = moment().unix();
+
+        // NOTE: Similar to liking posts (adding likes) endpoint
+        const cols = [comment_id, postID, user_id, date_sent, body];
+        const cols2 = [uuidv4(), user_id, postID, date_sent];
+        await Promise.all([
+          client.query(`INSERT INTO comments VALUES ($1, $2, $3, $4, $5)`, cols),
+          client.query(`INSERT INTO interactions (id, user_id, post_id, date_updated) VALUES ($1, $2, $3, $4) ON CONFLICT (user_id, post_id) DO UPDATE SET date_updated = ${date_sent}, count = interactions.count + 1 WHERE interactions.user_id = '${user_id}' AND interactions.post_id = '${postID}'`, cols2)
+        ]);
+        // TODO: Change format to match pageCommentsQuery query format
+        // id, post_id, author_id, username, profile_pic, date_sent, body, num_likes
+        res.status(200).send({
+          id: comment_id,
+          post_id: postID,
+          author_id: user_id,
+          date_sent,
+          body,
+          num_likes: 0
+        });
+      } finally {
+        client.release();
+      }
     }))
     .put(wrapper(async (req, res, next) => {
       const client = await pool.connect();
@@ -65,8 +76,29 @@ module.exports = (app, pool) => {
       }
     }))
     .delete(wrapper(async (req, res, next) => {
-      const comment_id = req.params.id;
-      await pool.query(`DELETE FROM comments WHERE id = '${comment_id}'`);
-      res.sendStatus(200);
+      const client = await pool.connect();
+      try {
+        const comment_id = req.params.id;
+        const { user_id, post_id } = req.query;
+
+        const interactions = await client.query(`SELECT count FROM interactions WHERE user_id = '${user_id}' AND post_id = '${post.id}'`);
+        // NOTE: Similar to editing post - removing likes
+        if (interactions.rows.length === 0) {
+          await client.query(`DELETE FROM comments WHERE id = '${comment_id}'`);
+        } else if (interactions.rows[0].count > 1) {
+          await Promise.all([
+            client.query(`DELETE FROM comments WHERE id = '${comment_id}'`),
+            client.query(`UPDATE interactions SET count = count - 1 WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+          ]);
+        } else {
+          await Promise.all([
+            client.query(`DELETE FROM comments WHERE id = '${comment_id}'`),
+            client.query(`DELETE FROM interactions WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+          ]);
+        }
+        res.sendStatus(200);
+      } finally {
+        client.release();
+      }
     }))
 }
