@@ -8,7 +8,7 @@ CREATE TABLE users (
   password text NOT NULL,
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
-  bio text NOT NULL,
+  -- bio text NOT NULL,
   date_joined bigint NOT NULL,
   location geography,
   coordinates text, -- longitude latitude
@@ -38,14 +38,16 @@ CREATE TABLE topic_subscribers (
 );
 
 -- When adding a row, remove all related rows from partner_requests
--- CREATE TABLE partners (
---   id text PRIMARY KEY,
---   user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
---   user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
---   date_together bigint, -- start date
---   countdown bigint,
---   type text NOT NULL
--- );
+CREATE TABLE partners (
+  id text PRIMARY KEY,
+  user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  date_together bigint, -- start date
+  countdown bigint,
+  request_code text NOT NULL UNIQUE,
+  date_requested bigint NOT NULL,
+  type text NOT NULL -- 'ldr', 'normal'
+);
 
 -- Can only have one request for a partner at a time - 1 row for each "sender"
 -- Subsequent requests to different users override (update receiver_id and code) the previous request
@@ -95,6 +97,7 @@ CREATE TABLE posts (
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
+  hidden boolean NOT NULL DEFAULT false,
   location geography,
   coordinates text -- longitude latitude
 );
@@ -138,6 +141,7 @@ CREATE TABLE interactions (
 
 -- Need this for INSERT ON CONFLICT UPDATE
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
+ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
 
 -- Insert dummy user
 INSERT INTO users VALUES (
@@ -147,7 +151,7 @@ INSERT INTO users VALUES (
   '',
   NULL,
   NULL,
-  '',
+  -- '', -- bio
   0,
   NULL,
   NULL,

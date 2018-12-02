@@ -52,6 +52,8 @@ const interactions = (userID, offset) => (
 );
 
 module.exports = {
+  limit,
+  commentsLimit,
   posts,
   feed,
   comments,

@@ -13,7 +13,7 @@ const pageFeedQuery = require('../helpers/paginate').feed;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
-    .get(wrapper(async (req, res, next) => {
+    .get(wrapper(async (req, res, next) => { // TODO: Figure out how to lazy load
       // According to the type "private" or "public" or "edit"
       // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
       // "edit" - get the rest of the data needed for profile management
@@ -39,23 +39,49 @@ module.exports = (app, pool) => {
           throw new Error('get: /api/user, type has to be either "private", "public"');
         }
 
-        // Only get likes for the posts retrieved, not likes from all time
-        const length = posts.rows.length;
-        const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
-        for (let i = 0; i < length; i++) {
-          filter[i] = `post_id = '${posts.rows[i].id}'`;
-          postsOrder[i] = posts.rows[i].id;
-          postsObj[posts.rows[i].id] = posts.rows[i];
+        const store = {}; // Track which postIDs have already been stored in filter
+        const filter = []; // Store postID queries
+        const postsLen = posts.rows.length;
+        const postsOrder = new Array(postsLen), postsObj = {};
+
+        const interLen = interactions.rows.length;
+        const interOrder = new Array(interLen), interObj = {};
+
+        const friendsLen = friends.rows.length;
+
+        let flag = true;
+        let i = 0;
+        while (flag) {
+          if (i <= postsLen - 1) {
+            if (!store[posts.rows[i].id]) {
+              filter.push(`post_id = '${posts.rows[i].id}'`);
+              store[posts.rows[i].id] = true;
+            }
+            postsOrder[i] = posts.rows[i].id;
+            postsObj[posts.rows[i].id] = posts.rows[i];
+            flag = false;
+          }
+          if (i <= interLen - 1) {
+            if (!store[posts.rows[i].id]) {
+              filter.push(`post_id = '${interactions.rows[i].id}'`);
+              store[interactions.rows[i].id] = true;
+            }
+            interOrder[i] = interactions.rows[i].id;
+            interObj[interactions.rows[i].id] = interactions.rows[i];
+            flag = false;
+          }
+
+          flag = !flag;
+          i++;
         }
+
+        // NOTE: ALL post likes - posts & interactions
         let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE (user_id = '${user_id}') ${filter.length > 0 ? `AND (${filter.join(' OR ')})` : ''}`);
-        // Convert to object that maps post_id to likes
+        // Convert to object that keeps track of whether or not the post has already been liked
         post_likes = post_likes.rows.reduce((acc, post_like) => {
           acc[post_like.post_id] = true;
           return acc;
         }, {});
-
-        console.log(interactions.rows);
-        console.log(friends.rows);
 
         if (users.rows.length === 0) {
           res.status(200).send({
@@ -69,10 +95,15 @@ module.exports = (app, pool) => {
             user: {
               ...users.rows[0],
               posts: {
-                offset: length,
+                offset: postsLen,
                 data: postsObj,
                 order: postsOrder,
-                post_likes
+                post_likes // Includes post_likes from posts AND interactions
+              },
+              interactions: {
+                offset: interLen,
+                data: interObj,
+                order: interOrder
               },
               initial_loading: false,
               refreshing: false
