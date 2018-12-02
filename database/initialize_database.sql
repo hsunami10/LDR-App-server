@@ -42,21 +42,10 @@ CREATE TABLE partners (
   user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_together bigint, -- start date
-  countdown bigint,
   request_code text NOT NULL UNIQUE,
-  date_requested bigint NOT NULL,
-  type text NOT NULL -- 'ldr', 'normal'
+  countdown bigint,
+  type text NOT NULL DEFAULT 'in-person' -- 'ldr', 'in-person', 'both'
 );
-
--- Can only have one request for a partner at a time - 1 row for each "sender"
--- Subsequent requests to different users override (update receiver_id and code) the previous request
--- CREATE TABLE partner_requests (
---   id text PRIMARY KEY,
---   sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests sent
---   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for partner requests pending
---   date_sent bigint NOT NULL,
---   code text NOT NULL UNIQUE -- shortid
--- );
 
 -- Only add row if mutual friends
 -- When adding a row, remove the related row from friend_requests

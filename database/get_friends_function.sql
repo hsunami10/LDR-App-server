@@ -1,0 +1,2 @@
+-- Look at code here for help
+-- https://github.com/hsunami10/ProxiChat/blob/master/server/update_location_function.sql

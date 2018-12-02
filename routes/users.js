@@ -19,17 +19,19 @@ module.exports = (app, pool) => {
       // "edit" - get the rest of the data needed for profile management
       const client = await pool.connect();
       try {
-        let users, posts, interactions, friends;
+        let partners, users, posts, interactions, friends;
         const targetID = req.params.id;
         const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
+          const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
           const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
           const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
 
           // Get friends and subscribers when the tabs (in view profile screen) are visited
-          [users, posts, interactions, friends] = await Promise.all([
+          [partners, users, posts, interactions, friends] = await Promise.all([
+            client.query(partnersQuery),
             client.query(usersQuery),
             client.query(postsQuery),
             client.query(interactionsQuery),
@@ -106,7 +108,8 @@ module.exports = (app, pool) => {
                 order: interOrder
               },
               initial_loading: false,
-              refreshing: false
+              refreshing: false,
+              partner: partners.rows.length === 0 ? null : partners.rows[0]
             }
           });
         }
