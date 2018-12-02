@@ -8,7 +8,6 @@ CREATE TABLE users (
   password text NOT NULL,
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
-  -- bio text NOT NULL,
   date_joined bigint NOT NULL,
   location geography,
   coordinates text, -- longitude latitude
@@ -151,7 +150,6 @@ INSERT INTO users VALUES (
   '',
   NULL,
   NULL,
-  -- '', -- bio
   0,
   NULL,
   NULL,

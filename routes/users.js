@@ -23,7 +23,7 @@ module.exports = (app, pool) => {
         const targetID = req.params.id;
         const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
-          const usersQuery = `SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
+          const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
           const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here

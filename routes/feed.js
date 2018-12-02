@@ -6,12 +6,10 @@ const pageFeedQuery = require('../helpers/paginate').feed;
 module.exports = (app, pool) => {
   app.get('/api/feed/:id', wrapper(async (req, res, next) => {
     // Get blocked user ids
-
     // Get all topics subscribed to
-
     // Get your posts - where author_id = user_id
-
     // Get friends' ids
+    // Get partner's posts
     const client = await pool.connect();
     try {
       const { id } = req.params;
