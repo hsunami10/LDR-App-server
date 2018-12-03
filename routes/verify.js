@@ -6,7 +6,6 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-
 const thirtyMin = 1800; // Seconds
 
 // QUESTION: BUG: Might not throw correctly? "wrapper" might not catch it?

@@ -36,13 +36,16 @@ CREATE TABLE topic_subscribers (
   subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
 
--- When adding a row, remove all related rows from partner_requests
+-- NOTE: user1_id - generates request_code. user2_id - searches with code and accepts
+-- When adding user2_id as something OTHER THAN '', remove all instances of user1_id that equals that user2_id
+-- Default user2_id to ''
 CREATE TABLE partners (
   id text PRIMARY KEY,
   user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_together bigint, -- start date
   request_code text NOT NULL UNIQUE,
+  date_requested bigint NOT NULL, -- 30 min limit
   countdown bigint,
   type text NOT NULL DEFAULT 'in-person' -- 'ldr', 'in-person', 'both'
 );
