@@ -23,7 +23,7 @@ module.exports = (app, pool) => {
         if (res2.rows.length === 0) {
           let update, del, partner;
           [update, del, partner] = await Promise.all([
-            client.query(`UPDATE partners SET user2_id = '${userID}', date_requested = 0 WHERE user1_id = '${partnerID}'`), // Force expire code
+            client.query(`UPDATE partners SET user2_id = '${userID}', date_requested = 0 WHERE user1_id = '${partnerID}' AND user2_id = ''`), // Force expire code
             client.query(`DELETE FROM partners WHERE user1_id = '${userID}'`), // Remove your own generated codes
             client.query(`SELECT users.id, users.username, users.profile_pic, partners.date_together, partners.countdown, partners.type FROM partners INNER JOIN users ON users.id = partners.user1_id WHERE partners.user1_id = '${partnerID}'`) // NOTE: Make sure this is the same as get() /api/user/:id get_user_partner() - SAME AS GET_USER_PARTNER
           ]);
