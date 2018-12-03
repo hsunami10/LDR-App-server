@@ -23,6 +23,7 @@ module.exports = (app, pool) => {
         const targetID = req.params.id;
         const { type, user_id } = req.query;
         if (type === 'private' || type === 'public') {
+          // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
           const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
           const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);

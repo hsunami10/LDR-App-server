@@ -1,5 +1,6 @@
 -- When calling with SELECT * FROM, remember to include column definition after - can use any name
 -- AS (column1 data_type, column2 data_type) -> has to match two return statements
+-- Search SAME AS GET_USER_PARTNER if return value changes
 CREATE OR REPLACE FUNCTION get_user_partner(u_id text)
 RETURNS RECORD AS $BODY$
 DECLARE

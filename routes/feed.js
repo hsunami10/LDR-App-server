@@ -39,7 +39,7 @@ module.exports = (app, pool) => {
             if (row.user1_id === id) {
               partnerID = row.user2_id;
             } else {
-              partnerID = rows.user1_id;
+              partnerID = row.user1_id;
             }
             partnerQuery = `(posts.author_id = '${partnerID}' AND posts.hidden = false)`;
             break;
