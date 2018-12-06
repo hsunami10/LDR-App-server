@@ -19,9 +19,17 @@ pool.on('error', (err, client) => {
 });
 
 // ========================================== Middleware ==========================================
+// https://expressjs.com/en/guide/error-handling.html
 app.use(morgan('dev')); // Enable HTTP request logging
 app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Credentials', true);
+  res.header('Access-Control-Allow-Origin', req.headers.origin);
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With, X-HTTP-Method-Override, Content-Type, Accept');
+  next();
+});
 
 // Server resources
 app.use('/images/topics', express.static(__dirname + '/public/images/topics'));
