@@ -6,6 +6,7 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
+const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 
 const pagePostsQuery = require('../assets/paginate').posts;
 const pageInteractionsQuery = require('../assets/paginate').interactions;
@@ -26,7 +27,7 @@ module.exports = (app, pool) => {
         if (type === 'private' || type === 'public') {
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
-          const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}'`;
+          const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
           const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
@@ -90,6 +91,7 @@ module.exports = (app, pool) => {
         if (users.rows.length === 0) {
           res.status(200).send({
             success: false,
+            error: NO_USER_MSG,
             type
           });
         } else {
@@ -120,44 +122,13 @@ module.exports = (app, pool) => {
       }
     }))
     .post(wrapper(async (req, res, next) => {
-      if (req.params.id === 'send-email') {
-        const { text, subjectEnum, id } = req.body;
-        const subject = getFullSubject(subjectEnum);
-        const successMessage = getSuccessMessage(subjectEnum);
-
-        const res2 = await pool.query(`SELECT username, email, email_verified FROM users WHERE id = '${id}'`);
-        if (res2.rows.length === 0) {
-          res.status(200).send({ msg: 'User account does not exist' });
-        } else {
-          const { username, email, email_verified } = res2.rows[0];
-          if (!email) {
-            res.status(200).send({ msg: 'No email registered for this account', register_email: true });
-          } else {
-            if (email_verified) {
-              const data = {
-                from: `${username} <${email}>`,
-                to: devEmail,
-                subject,
-                text
-              }
-              mailgun.messages().send(data, (error, body) => {
-                if (error) {
-                  throw new Error('Email cannot be sent');
-                } else {
-                  res.status(200).send({ msg: successMessage, success: true });
-                }
-              });
-            } else {
-              res.status(200).send({ msg: 'Email address not verified', not_verified: true });
-            }
-          }
-        }
-      }
+      res.sendStatus(200);
     }))
     .put(wrapper(async (req, res, next) => {
       res.sendStatus(200);
     }))
     .delete(wrapper(async (req, res, next) => {
-      res.send('delete user with user id: ' + req.params.id);
+      await pool.query(`SELECT * FROM delete_user('${req.params.id}')`);
+      res.sendStatus(200);
     }))
 };

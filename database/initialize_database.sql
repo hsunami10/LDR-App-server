@@ -13,8 +13,9 @@ CREATE TABLE users (
   coordinates text, -- longitude latitude
   token text UNIQUE,
   token_time bigint,
-  email_verified boolean DEFAULT FALSE,
-  user_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
+  email_verified boolean DEFAULT false,
+  user_type text NOT NULL DEFAULT 'standard', -- 'admin', 'standard'
+  deleted boolean NOT NULL DEFAULT false
 );
 
 CREATE TABLE topics (
@@ -84,7 +85,7 @@ CREATE TABLE reports (
 CREATE TABLE posts (
   id text PRIMARY KEY,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE NO ACTION, -- Don't want posts to be removed when user account is removed
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   hidden boolean NOT NULL DEFAULT false,
@@ -95,7 +96,7 @@ CREATE TABLE posts (
 CREATE TABLE comments (
   id text PRIMARY KEY,
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE NO ACTION,
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_sent bigint NOT NULL,
   body text NOT NULL DEFAULT ''
 );
@@ -109,13 +110,13 @@ CREATE TABLE discover_searches (
 
 CREATE TABLE post_likes (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- QUESTION: Should likes stay if user account is deleted?
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE comment_likes (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- QUESTION: Should likes stay if user account is deleted?
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   comment_id text REFERENCES comments (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 

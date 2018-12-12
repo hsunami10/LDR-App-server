@@ -27,7 +27,7 @@ module.exports = (app, pool) => {
         `(SELECT id, topic_id, 'topics' FROM topic_subscribers WHERE subscriber_id = '${id}')` // Get topics the user is subscribed to
       ].join(' UNION '); // QUESTION: UNION ALL - does not remove duplicates, UNION - removes duplicates?
 
-      const res2 = await client.query(`SELECT id FROM users WHERE id = '${id}'`);
+      const res2 = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
       if (res2.rows.length === 0) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
@@ -90,6 +90,7 @@ module.exports = (app, pool) => {
         console.log('page feed');
         // console.log(feedQuery);
         const posts = await client.query(feedQuery);
+        console.log(posts.rows);
 
         // Only get likes for the posts retrieved, not likes from all time
         const length = posts.rows.length;

@@ -14,7 +14,7 @@ module.exports = (app, pool) => {
     const subject = getFullSubject(EmailSubjectEnum.password);
     const successMessage = getSuccessMessage(EmailSubjectEnum.password);
 
-    const res2 = await pool.query(`SELECT username, password, email_verified FROM users WHERE email = '${email}'`);
+    const res2 = await pool.query(`SELECT username, password, email_verified FROM users WHERE email = '${email}' AND deleted = false`);
     if (res2.rows.length === 0) {
       res.status(200).send({ msg: 'Email address is not registered / verified to any account' });
     } else {
@@ -45,7 +45,7 @@ module.exports = (app, pool) => {
   app.get('/api/login/:username/:password', wrapper(async (req, res, next) => {
     const { username, password } = req.params;
     // NOTE: Same query as get /api/user/:id private || public
-    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}'`);
+    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}' AND deleted = false`);
     if (res2.rows.length === 0) {
       res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
     } else {
@@ -59,7 +59,7 @@ module.exports = (app, pool) => {
     try {
       const { username, password } = req.body;
       const id = uuidv4();
-      const res2 = await client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}'`); // Ignore case sensitivity
+      const res2 = await client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}' AND deleted = false`); // Ignore case sensitivity
       if (res2.rows.length === 0) {
         const cols = [id, username, username.toLowerCase(), password, moment().unix()];
         await client.query(`INSERT INTO users (id, username, lowercase_username, password, date_joined) VALUES ($1, $2, $3, $4, $5)`, cols);

@@ -9,7 +9,7 @@ const getSuccessMessage = require('../config/mail').getSuccessMessage;
 const thirtyMin = require('../assets/constants').THIRTY_MIN; // Seconds
 
 // QUESTION: BUG: Might not throw correctly? "wrapper" might not catch it?
-const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => {
+const sendVerificationEmail = (client, data, res, successMessage, { linkID, id, email }) => {
   mailgun.messages().send(data, (error, body) => {
     if (error) {
       res.status(200).send({ msg: 'Email cannot be sent, please check if it\'s valid' });
@@ -43,14 +43,14 @@ module.exports = (app, pool) => {
     const client = await pool.connect();
     try {
       // Check if there's an existing user with the email
-      const res2 = await client.query(`SELECT id, email_verified, token_time FROM users WHERE email = '${email}'`);
+      const res2 = await client.query(`SELECT id, email_verified, token_time FROM users WHERE email = '${email}' AND deleted = false`);
       if (res2.rows.length === 0) { // No existing email
         // QUESTION: Do I even need this check here?
-        const res3 = await client.query(`SELECT email, email_verified FROM users WHERE id = '${id}'`);
+        const res3 = await client.query(`SELECT email, email_verified FROM users WHERE id = '${id}' AND deleted = false`);
         if (res3.rows.length === 0) {
           throw new Error('When sending verification email, the user does not exist.');
         } else {
-          sendEmail(client, data, res, successMessage, { linkID, id, email });
+          sendVerificationEmail(client, data, res, successMessage, { linkID, id, email });
         }
       } else { // Existing email
         if (res2.rows[0].id === id) { // If the email exists and the same user requesting
@@ -59,7 +59,7 @@ module.exports = (app, pool) => {
           } else if (moment().unix() - res2.rows[0].token_time < thirtyMin) {
             res.status(200).send({ msg: 'Verification email already sent' });
           } else {
-            sendEmail(client, data, res, successMessage, { linkID, id, email });
+            sendVerificationEmail(client, data, res, successMessage, { linkID, id, email });
           }
         } else { // If the email exists and not the same user
           res.status(200).send({ msg: 'Email address already in use' });
@@ -74,7 +74,7 @@ module.exports = (app, pool) => {
     const now = moment().unix();
     const client = await pool.connect();
     try {
-      const res2 = await client.query(`SELECT token_time FROM users WHERE token = '${req.params.id}'`);
+      const res2 = await client.query(`SELECT token_time FROM users WHERE token = '${req.params.id}' AND deleted = false`);
       if (res2.rows.length === 0) {
         res.send('Oops! This link has expired. You will see a "link expired" page here.');
       } else if (now - res2.rows[0].token_time < thirtyMin) {

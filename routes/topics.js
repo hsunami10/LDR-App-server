@@ -57,7 +57,7 @@ module.exports = (app, pool) => {
           }
         });
       } else {
-        res.status(200).send({ msg: 'Topic name already taken' });
+        res.status(200).send({ success: false, error: 'Topic name already taken' });
       }
     } finally {
       client.release();
