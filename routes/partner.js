@@ -27,12 +27,12 @@ module.exports = (app, pool) => {
             client.query(`DELETE FROM partners WHERE user1_id = '${userID}'`), // Remove your own generated codes
             client.query(`SELECT users.id, users.username, users.profile_pic, partners.date_together, partners.countdown, partners.type FROM partners INNER JOIN users ON users.id = partners.user1_id WHERE partners.user1_id = '${partnerID}'`) // NOTE: Make sure this is the same as get() /api/user/:id get_user_partner() - SAME AS GET_USER_PARTNER
           ]);
-          res.status(200).send({ success: true, result: partner.rows[0], msg: 'Partner has been added!' });
+          res.status(200).send({ success: true, result: partner.rows[0], message: 'Partner has been added!' });
         } else {
-          res.status(200).send({ success: false, msg: 'You can only have one partner at a time.'});
+          res.status(200).send({ success: false, error: 'You can only have one partner at a time.'});
         }
       } else {
-        res.status(200).send({ success: false, msg: 'You cannot be a partner with yourself!' });
+        res.status(200).send({ success: false, error: 'You cannot be a partner with yourself!' });
       }
     } finally {
       client.release();

@@ -3,6 +3,7 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const fetchComments = require('../assets/queries').fetchComments;
+const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 module.exports = (app, pool) => {
   app.route('/api/comments/:id')
@@ -13,19 +14,25 @@ module.exports = (app, pool) => {
       try {
         const { offset, latest_date, post_id } = req.query;
         const user_id = req.params.id;
-        const result = await fetchComments(
-          client,
-          user_id,
-          offset,
-          pageCommentsQuery(post_id, parseInt(offset), latest_date)
-        );
-        res.status(200).send(result);
+        const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
+        if (res2.rows.length === 0) {
+          res.status(200).send({ success: false, error: NO_POST_MSG });
+        } else {
+          const result = await fetchComments(
+            client,
+            user_id,
+            offset,
+            pageCommentsQuery(post_id, parseInt(offset), latest_date)
+          );
+          res.status(200).send({ success: true, result });
+        }
       } finally {
         client.release();
       }
     }))
     .post(wrapper(async (req, res, next) => {
       // TODO: Finish this later - add comments
+      // TODO: See if post still exists
       const client = await pool.connect();
       try {
         const user_id = req.params.id;
