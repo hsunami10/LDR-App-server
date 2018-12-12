@@ -1,18 +1,19 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
+const wrapper = require('../assets/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 
-const pagePostsQuery = require('../helpers/paginate').posts;
-const pageInteractionsQuery = require('../helpers/paginate').interactions;
-const pageFeedQuery = require('../helpers/paginate').feed;
+const pagePostsQuery = require('../assets/paginate').posts;
+const pageInteractionsQuery = require('../assets/paginate').interactions;
+const pageFeedQuery = require('../assets/paginate').feed;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
+    // TODO: Show NO_USER_MSG, success: false - if user does not exists
     .get(wrapper(async (req, res, next) => { // TODO: Figure out how to lazy load
       // According to the type "private" or "public" or "edit"
       // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
@@ -154,11 +155,7 @@ module.exports = (app, pool) => {
       }
     }))
     .put(wrapper(async (req, res, next) => {
-      if (req.params.id === 'set-active') {
-        const { id, bool } = req.body;
-        const res2 = await pool.query(`UPDATE users SET active = ${bool} WHERE id = '${id}'`)
-        res.sendStatus(200);
-      }
+      res.sendStatus(200);
     }))
     .delete(wrapper(async (req, res, next) => {
       res.send('delete user with user id: ' + req.params.id);

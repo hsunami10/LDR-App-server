@@ -1,7 +1,7 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
-const pageFeedQuery = require('../helpers/paginate').feed;
+const wrapper = require('../assets/wrapper');
+const pageFeedQuery = require('../assets/paginate').feed;
 
 module.exports = (app, pool) => {
   app.get('/api/feed/:id', wrapper(async (req, res, next) => {

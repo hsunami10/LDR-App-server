@@ -1,7 +1,7 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
-const thirtyMin = 1800; // Seconds
+const wrapper = require('../assets/wrapper');
+const thirtyMin = require('../assets/constants').THIRTY_MIN; // Seconds
 
 module.exports = (app, pool) => {
   app.get('/api/partner/find-code/:code', wrapper(async (req, res, next) => {

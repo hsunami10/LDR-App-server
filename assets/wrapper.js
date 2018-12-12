@@ -2,18 +2,18 @@
 // NOTE: If table names / number changes, change this too
 const generateMessage = type => {
   console.log(type);
-  let msg = ' does not exist or has been deleted.';
+  let msg = ' has been deleted.';
   // Tables that have a foreign key referencing them
   // NOTE: Same as client, helpers/index.js, function handleError
   switch (type) {
     case 'topics':
-      msg = 'This topic' + msg;
+      msg = NO_TOPIC_MSG;
       break;
     case 'users':
-      msg = 'This account' + msg + ' If this keeps recurring, please send a bug report, and we will get it fixed as soon as possible.';
+      msg = NO_USER_MSG;
       break;
     case 'posts':
-      msg = 'This post' + msg;
+      msg = NO_POST_MSG;
       break;
     default:
       break;

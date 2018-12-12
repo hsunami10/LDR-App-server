@@ -1,12 +1,12 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
-const pageCommentsQuery = require('../helpers/paginate').comments;
-const fetchComments = require('../helpers/queries').fetchComments;
+const wrapper = require('../assets/wrapper');
+const pageCommentsQuery = require('../assets/paginate').comments;
+const fetchComments = require('../assets/queries').fetchComments;
 
+// get post put delete single posts
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
-    // Only call when refreshing
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {

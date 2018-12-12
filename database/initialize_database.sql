@@ -14,7 +14,6 @@ CREATE TABLE users (
   token text UNIQUE,
   token_time bigint,
   email_verified boolean DEFAULT FALSE,
-  active boolean DEFAULT FALSE, -- NOTE: if can't figure out how to run an event on app terminate, then remove this
   user_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
 );
 
@@ -33,7 +32,7 @@ CREATE TABLE topic_subscribers (
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
   muted boolean NOT NULL DEFAULT false, -- notifications muted yes/no
   date_subscribed bigint NOT NULL,
-  subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard'
+  subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard', QUESTION: Who will be admin if admin deletes user account?
 );
 
 -- NOTE: user1_id - generates request_code. user2_id - searches with code and accepts
@@ -85,7 +84,7 @@ CREATE TABLE reports (
 CREATE TABLE posts (
   id text PRIMARY KEY,
   topic_id text REFERENCES topics (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE NO ACTION, -- Don't want posts to be removed when user account is removed
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
   hidden boolean NOT NULL DEFAULT false,
@@ -96,7 +95,7 @@ CREATE TABLE posts (
 CREATE TABLE comments (
   id text PRIMARY KEY,
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE NO ACTION,
   date_sent bigint NOT NULL,
   body text NOT NULL DEFAULT ''
 );
@@ -110,13 +109,13 @@ CREATE TABLE discover_searches (
 
 CREATE TABLE post_likes (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- QUESTION: Should likes stay if user account is deleted?
   post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 CREATE TABLE comment_likes (
   id text PRIMARY KEY,
-  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- QUESTION: Should likes stay if user account is deleted?
   comment_id text REFERENCES comments (id) ON UPDATE CASCADE ON DELETE CASCADE
 );
 

@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
+const wrapper = require('../assets/wrapper');
 const upload = require('../config/multer');
 
 module.exports = (app, pool) => {

@@ -1,12 +1,12 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
+const wrapper = require('../assets/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const thirtyMin = 1800; // Seconds
+const thirtyMin = require('../assets/constants').THIRTY_MIN; // Seconds
 
 // QUESTION: BUG: Might not throw correctly? "wrapper" might not catch it?
 const sendEmail = (client, data, res, successMessage, { linkID, id, email }) => {

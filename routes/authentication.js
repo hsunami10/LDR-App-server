@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
+const wrapper = require('../assets/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
@@ -16,7 +16,7 @@ module.exports = (app, pool) => {
 
     const res2 = await pool.query(`SELECT username, password, email_verified FROM users WHERE email = '${email}'`);
     if (res2.rows.length === 0) {
-      res.status(200).send({ msg: 'Email address is not registered to any account' });
+      res.status(200).send({ msg: 'Email address is not registered / verified to any account' });
     } else {
       const { username, password, email_verified } = res2.rows[0];
       if (email_verified) {

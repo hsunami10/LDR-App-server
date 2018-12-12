@@ -1,13 +1,13 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../helpers/wrapper');
-const pageCommentsQuery = require('../helpers/paginate').comments;
-const fetchComments = require('../helpers/queries').fetchComments;
+const wrapper = require('../assets/wrapper');
+const pageCommentsQuery = require('../assets/paginate').comments;
+const fetchComments = require('../assets/queries').fetchComments;
 
 module.exports = (app, pool) => {
   app.route('/api/comments/:id')
     // Similar to fetching feed
-    // Only call when paging - view previous comments and initial retrieval
+    // Only call when paging
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
