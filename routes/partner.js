@@ -9,7 +9,7 @@ module.exports = (app, pool) => {
     if (res2.rows.length === 0) {
       res.status(200).send({ success: false });
     } else {
-      res.status(200).send({ success: true, result: res2.rows[0] });
+      res.status(200).send({ success: true, user: res2.rows[0] });
     }
   }))
 
@@ -27,7 +27,7 @@ module.exports = (app, pool) => {
             client.query(`DELETE FROM partners WHERE user1_id = '${userID}'`), // Remove your own generated codes
             client.query(`SELECT users.id, users.username, users.profile_pic, partners.date_together, partners.countdown, partners.type FROM partners INNER JOIN users ON users.id = partners.user1_id WHERE partners.user1_id = '${partnerID}'`) // NOTE: Make sure this is the same as get() /api/user/:id get_user_partner() - SAME AS GET_USER_PARTNER
           ]);
-          res.status(200).send({ success: true, result: partner.rows[0], message: 'Partner has been added!' });
+          res.status(200).send({ success: true, partner: partner.rows[0], message: 'Partner has been added!' });
         } else {
           res.status(200).send({ success: false, error: 'You can only have one partner at a time.'});
         }

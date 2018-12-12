@@ -3,6 +3,7 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const fetchComments = require('../assets/queries').fetchComments;
+const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 // get post put delete single posts
 module.exports = (app, pool) => {
@@ -12,26 +13,33 @@ module.exports = (app, pool) => {
       try {
         const { earliest_date, post_id } = req.query;
         const user_id = req.params.id;
-
-        // Get post
-        // NOTE: Match format of helpers/paginate.posts & helpers/paginate.feed query
-        const postsQuery = `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments FROM posts INNER JOIN users ON users.id = posts.author_id INNER JOIN topics ON posts.topic_id = topics.id WHERE posts.id = '${post_id}'`;
-        const postRes = await client.query(postsQuery);
-
-        // Get comments
-        // NOTE: Match format of helpers/paginate.comments query
-        let commentsQuery = '';
-        if (parseInt(earliest_date, 10) === 0) { // True only if no comments when refreshing
-          commentsQuery = pageCommentsQuery(post_id, 0, moment().unix());
+        const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
+        if (res2.rows.length === 0) {
+          res.status(200).send({ success: false, error: NO_POST_MSG });
         } else {
-          commentsQuery = `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON users.id = comments.author_id WHERE comments.date_sent >= ${earliest_date} AND comments.post_id = '${post_id}'`;
-        }
-        const comments = await fetchComments(client, user_id, 0, commentsQuery);
+          // Get post
+          // NOTE: Match format of helpers/paginate.posts & helpers/paginate.feed query
+          const postsQuery = `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments FROM posts INNER JOIN users ON users.id = posts.author_id INNER JOIN topics ON posts.topic_id = topics.id WHERE posts.id = '${post_id}'`;
+          const postRes = await client.query(postsQuery);
 
-        res.status(200).send({
-          post: postRes.rows[0],
-          comments
-        });
+          // Get comments
+          // NOTE: Match format of helpers/paginate.comments query
+          let commentsQuery = '';
+          if (parseInt(earliest_date, 10) === 0) { // True only if no comments when refreshing
+            commentsQuery = pageCommentsQuery(post_id, 0, moment().unix());
+          } else {
+            commentsQuery = `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON users.id = comments.author_id WHERE comments.date_sent >= ${earliest_date} AND comments.post_id = '${post_id}'`;
+          }
+          const comments = await fetchComments(client, user_id, 0, commentsQuery);
+
+          res.status(200).send({
+            success: true,
+            result: {
+              post: postRes.rows[0],
+              comments
+            }
+          });
+        }
       } finally {
         client.release();
       }

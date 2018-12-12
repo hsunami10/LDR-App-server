@@ -24,7 +24,7 @@ module.exports = (app, pool) => {
             offset,
             pageCommentsQuery(post_id, parseInt(offset), latest_date)
           );
-          res.status(200).send({ success: true, result });
+          res.status(200).send({ success: true, comments: result });
         }
       } finally {
         client.release();
@@ -32,7 +32,7 @@ module.exports = (app, pool) => {
     }))
     .post(wrapper(async (req, res, next) => {
       // TODO: Finish this later - add comments
-      // TODO: See if post still exists
+      // TODO: See if post still exists - might not need to do this because foreign key violation will handle it
       const client = await pool.connect();
       try {
         const user_id = req.params.id;
@@ -62,13 +62,14 @@ module.exports = (app, pool) => {
       }
     }))
     .put(wrapper(async (req, res, next) => {
+      // TODO: Check to see if comment still exists
       const client = await pool.connect();
       try {
         const user_id = req.params.id;
         const { type, comment } = req.body;
         if (type === 'num_likes') {
           const comment_likes = await client.query(`SELECT id FROM comment_likes WHERE user_id = '${user_id}' AND comment_id = '${comment.id}'`);
-          if (comment_likes.rows.length === 0) {
+          if (comment_likes.rows.length === 0) { // This is always true if the comment is deleted
             const cols = [uuidv4(), user_id, comment.id];
             await client.query(`INSERT INTO comment_likes (id, user_id, comment_id) VALUES ($1, $2, $3)`, cols);
           } else {
@@ -88,19 +89,19 @@ module.exports = (app, pool) => {
         const comment_id = req.params.id;
         const { user_id, post_id } = req.query;
 
-        const interactions = await client.query(`SELECT count FROM interactions WHERE user_id = '${user_id}' AND post_id = '${post.id}'`);
+        const interactions = await client.query(`SELECT count FROM interactions WHERE user_id = '${user_id}' AND post_id = '${post_id}'`);
         // NOTE: Similar to editing post - removing likes
         if (interactions.rows.length === 0) {
           await client.query(`DELETE FROM comments WHERE id = '${comment_id}'`);
         } else if (interactions.rows[0].count > 1) {
           await Promise.all([
             client.query(`DELETE FROM comments WHERE id = '${comment_id}'`),
-            client.query(`UPDATE interactions SET count = count - 1 WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+            client.query(`UPDATE interactions SET count = count - 1 WHERE post_id = '${post_id}' AND user_id = '${user_id}'`)
           ]);
         } else {
           await Promise.all([
             client.query(`DELETE FROM comments WHERE id = '${comment_id}'`),
-            client.query(`DELETE FROM interactions WHERE post_id = '${post.id}' AND user_id = '${user_id}'`)
+            client.query(`DELETE FROM interactions WHERE post_id = '${post_id}' AND user_id = '${user_id}'`)
           ]);
         }
         res.sendStatus(200);

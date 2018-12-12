@@ -1,8 +1,15 @@
+const {
+  NO_TOPIC_MSG,
+  NO_USER_MSG,
+  NO_POST_MSG,
+  NO_COMMENT_MSG
+} = require('./constants');
+
 // Generate an error message for foreign key constraint errors
 // NOTE: If table names / number changes, change this too
+// NOTE: Same cases as handleAction in client/src/assets/helpers/errors/index.js
 const generateMessage = type => {
-  console.log(type);
-  let msg = ' has been deleted.';
+  let msg = `Foreign key violation for table: ${type}`;
   // Tables that have a foreign key referencing them
   // NOTE: Same as client, helpers/index.js, function handleError
   switch (type) {
@@ -14,6 +21,9 @@ const generateMessage = type => {
       break;
     case 'posts':
       msg = NO_POST_MSG;
+      break;
+    case 'comments':
+      msg = NO_COMMENT_MSG;
       break;
     default:
       break;

@@ -33,7 +33,7 @@ module.exports = (app, pool) => {
       } else {
         const filterRes = await client.query(filterQuery);
         const filterRows = filterRes.rows;
-        console.log(filterRows);
+        // console.log(filterRows);
 
         let partnerQuery = '(false)', friendArr = [], blockedArr = [], topicArr = [];
         for (let i = 0, len = filterRows.length; i < len; i++) {
@@ -88,7 +88,7 @@ module.exports = (app, pool) => {
         let feedQuery = pageFeedQuery(whereQuery, order, direction, parseInt(offset), latest_date);
 
         console.log('page feed');
-        console.log(feedQuery);
+        // console.log(feedQuery);
         const posts = await client.query(feedQuery);
 
         // Only get likes for the posts retrieved, not likes from all time
@@ -103,7 +103,7 @@ module.exports = (app, pool) => {
         if (filter.length === 0) {
           res.status(200).send({
             success: true,
-            result: {
+            feed: {
               post_likes: {},
               posts: postsObj,
               order: postsOrder
@@ -119,7 +119,7 @@ module.exports = (app, pool) => {
 
           res.status(200).send({
             success: true,
-            result: {
+            feed: {
               post_likes,
               posts: postsObj,
               order: postsOrder
