@@ -2,7 +2,7 @@ const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
-const fetchComments = require('../assets/queries').fetchComments;
+const getComments = require('../assets/queries').getComments;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 module.exports = (app, pool) => {
@@ -18,7 +18,7 @@ module.exports = (app, pool) => {
         if (res2.rows.length === 0) {
           res.status(200).send({ success: false, error: NO_POST_MSG });
         } else {
-          const result = await fetchComments(
+          const result = await getComments(
             client,
             user_id,
             offset,

@@ -1,4 +1,4 @@
-// Pagination queries
+// Pagination queries - functions that return strings ONLY
 const limit = 20;
 
 // RowNum starts at 1
@@ -33,6 +33,7 @@ const feed = (whereQuery, orderCol, direction, offset, latest) => {
       benchmark = `posts.date_posted <= ${latest} AND`;
       break;
     case 'num_likes':
+      // TODO: BUG: QUESTION: How to page and order by number of likes?
       orderQuery = `(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) ${direction}`;
       benchmark = `(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) <= ${latest} AND`
       break;
@@ -55,11 +56,16 @@ const interactions = (userID, offset) => (
   `SELECT * FROM (SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments, ROW_NUMBER () OVER (ORDER BY interactions.date_updated DESC) AS RowNum FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE interactions.user_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
 );
 
+const friends = (userID, offset) => (
+  `SELECT * FROM (SELECT friends.id, users.id AS user_id, users.profile_pic, friends.date_friended, users.date_joined, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_friend_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+);
+
 module.exports = {
   limit,
   commentsLimit,
   posts,
   feed,
   comments,
-  interactions
+  interactions,
+  friends
 };

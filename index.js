@@ -1,5 +1,6 @@
 const express = require('express');
 const app = express();
+const http = require('http');
 const { Pool } = require('pg');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
@@ -49,6 +50,6 @@ require('./routes/users')(app, pool);
 // ============================= Temporary routes for verifying email =============================
 require('./routes/verify')(app, pool);
 
-const server = require('http').Server(app);
+const server = http.Server(app);
 require('./config/sockets')(server, pool);
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));

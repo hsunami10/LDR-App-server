@@ -2,7 +2,7 @@ const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
-const fetchComments = require('../assets/queries').fetchComments;
+const getComments = require('../assets/queries').getComments;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 // get post put delete single posts
@@ -30,7 +30,7 @@ module.exports = (app, pool) => {
           } else {
             commentsQuery = `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON users.id = comments.author_id WHERE comments.date_sent >= ${earliest_date} AND comments.post_id = '${post_id}'`;
           }
-          const comments = await fetchComments(client, user_id, 0, commentsQuery);
+          const comments = await getComments(client, user_id, 0, commentsQuery);
 
           res.status(200).send({
             success: true,
