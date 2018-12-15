@@ -63,8 +63,7 @@ CREATE TABLE friend_requests (
   id text PRIMARY KEY,
   sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests sent
   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE, -- Look here for friend requests pending
-  date_sent bigint NOT NULL,
-  message text NOT NULL DEFAULT 'Let''s be friends!'
+  date_sent bigint NOT NULL
 );
 
 -- Remove from friend_requests, friends, partners tables
@@ -133,6 +132,7 @@ CREATE TABLE interactions (
 -- Need this for INSERT ON CONFLICT UPDATE
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
 ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
+ALTER TABLE friend_requests ADD CONSTRAINT friend_requests_sender_receiver_id_constraint UNIQUE (sender_id, receiver_id);
 
 -- Insert dummy user
 INSERT INTO users VALUES (

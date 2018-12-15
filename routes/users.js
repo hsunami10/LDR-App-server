@@ -33,7 +33,8 @@ module.exports = (app, pool) => {
           const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
           const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
-          const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
+          // TODO: Remember to take your (user_id) blocked users into account
+          // const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
 
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [partners, users, posts, interactions, friends] = await Promise.all([
@@ -41,7 +42,7 @@ module.exports = (app, pool) => {
             client.query(usersQuery),
             client.query(postsQuery),
             client.query(interactionsQuery),
-            client.query(friendsQuery)
+            // client.query(friendsQuery)
           ]);
         } else {
           throw new Error('get: /api/user, type has to be either "private", "public"');

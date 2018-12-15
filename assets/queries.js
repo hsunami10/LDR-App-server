@@ -40,7 +40,7 @@ const getComments = async (client, user_id, offset, queryString) => {
 };
 
 const getUserRequests = async (client, user_id) => {
-  const requests = await client.query(`SELECT friend_requests.id, friend_requests.sender_id as user_id, users.profile_pic, friend_requests.message, users.date_joined, 'request' as type FROM friend_requests INNER JOIN users ON friend_requests.sender_id = users.id WHERE friend_requests.receiver_id = '${user_id}' ORDER BY friend_requests.date_sent DESC`);
+  const requests = await client.query(`SELECT friend_requests.sender_id AS id, users.username, users.profile_pic, 'request' as type FROM friend_requests INNER JOIN users ON friend_requests.sender_id = users.id WHERE friend_requests.receiver_id = '${user_id}' ORDER BY friend_requests.date_sent DESC`);
   if (requests.rows.length === 0) {
     return {
       data: {},
@@ -63,7 +63,7 @@ const getUserRequests = async (client, user_id) => {
 };
 
 const getPendingRequests = async (client, user_id) => {
-  const pendings = await client.query(`SELECT friend_requests.id, friend_requests.receiver_id as user_id, users.profile_pic, friend_requests.date_sent, users.date_joined, 'pending' as type FROM friend_requests INNER JOIN users ON friend_requests.receiver_id = users.id WHERE friend_requests.sender_id = '${user_id}' ORDER BY friend_requests.date_sent DESC`);
+  const pendings = await client.query(`SELECT friend_requests.receiver_id AS id, users.username, users.profile_pic, friend_requests.date_sent, 'pending' as type FROM friend_requests INNER JOIN users ON friend_requests.receiver_id = users.id WHERE friend_requests.sender_id = '${user_id}' ORDER BY friend_requests.date_sent DESC`);
   if (pendings.rows.length === 0) {
     return {
       data: {},
@@ -91,7 +91,8 @@ const getUserFriends = async (client, user_id, offset) => {
     return {
       data: {},
       order: [],
-      offset
+      offset,
+      keepPaging: false
     };
   } else {
     const length = friends.rows.length;
@@ -105,15 +106,19 @@ const getUserFriends = async (client, user_id, offset) => {
     return {
       data: friendsObj,
       order: friendsOrder,
-      offset: offset + friendsOrder.length
+      offset: offset + friendsOrder.length,
+      keepPaging: friendsOrder.length !== 0
     };
   }
 };
+
+const removeFriendRequestQuery = (senderID, receiverID) => `DELETE FROM friend_requests WHERE sender_id = '${senderID}' AND receiver_id = '${receiverID}'`;
 
 module.exports = {
   getComments,
   getUserRequests,
   getPendingRequests,
   getUserFriends,
-  userExists
+  userExists,
+  removeFriendRequestQuery
 }
