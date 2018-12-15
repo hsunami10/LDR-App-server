@@ -1,5 +1,10 @@
 const friendsQuery = require('./paginate').friends;
 
+const userExists = async (client, id) => {
+  const res = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
+  return res.rows;
+}
+
 const getComments = async (client, user_id, offset, queryString) => {
   const comments = await client.query(queryString);
   const length = comments.rows.length;
@@ -85,7 +90,8 @@ const getUserFriends = async (client, user_id, offset) => {
   if (friends.rows.length === 0) {
     return {
       data: {},
-      order: []
+      order: [],
+      offset
     };
   } else {
     const length = friends.rows.length;
@@ -98,7 +104,8 @@ const getUserFriends = async (client, user_id, offset) => {
     }
     return {
       data: friendsObj,
-      order: friendsOrder
+      order: friendsOrder,
+      offset: offset + friendsOrder.length
     };
   }
 };
@@ -107,5 +114,6 @@ module.exports = {
   getComments,
   getUserRequests,
   getPendingRequests,
-  getUserFriends
+  getUserFriends,
+  userExists
 }

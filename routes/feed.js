@@ -3,6 +3,7 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageFeedQuery = require('../assets/paginate').feed;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
+const userExists = require('../assets/queries').userExists;
 
 module.exports = (app, pool) => {
   app.get('/api/feed/:id', wrapper(async (req, res, next) => {
@@ -27,8 +28,8 @@ module.exports = (app, pool) => {
         `(SELECT id, topic_id, 'topics' FROM topic_subscribers WHERE subscriber_id = '${id}')` // Get topics the user is subscribed to
       ].join(' UNION '); // QUESTION: UNION ALL - does not remove duplicates, UNION - removes duplicates?
 
-      const res2 = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
-      if (res2.rows.length === 0) {
+      const res2 = await userExists(client, id);
+      if (res2.length === 0) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const filterRes = await client.query(filterQuery);

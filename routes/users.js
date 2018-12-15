@@ -134,23 +134,4 @@ module.exports = (app, pool) => {
       await pool.query(`SELECT * FROM delete_user('${req.params.id}')`);
       res.sendStatus(200);
     }))
-
-  app.get('/api/users/get-social-info/:id', wrapper(async (req, res, next) => {
-    const client = await pool.connect();
-    try {
-      let requests, pending, friends;
-      [requests, pending, friends] = await Promise.all([
-        getUserRequests(client, req.params.id),
-        getPendingRequests(client, req.params.id),
-        getUserFriends(client, req.params.id, 0)
-      ]);
-      res.status(200).send({
-        requests,
-        pending,
-        friends
-      })
-    } finally {
-      client.release();
-    }
-  }))
 };
