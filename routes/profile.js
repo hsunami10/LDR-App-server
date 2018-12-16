@@ -15,10 +15,7 @@ module.exports = (app, pool) => {
     } else {
       path = null;
     }
-    // TODO: Find out how to use code here
-    // Check to see if code matches in partners table
-    // Send success or failed data, instead of only sendStatus
-    await pool.query(`UPDATE users SET bio = ${bio.length === 0 ? `''` : `'${bio}'`} profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
+    await pool.query(`UPDATE users SET bio = ${bio.length === 0 ? `''` : `'${bio}'`}, profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
     res.sendStatus(200);
   }));
 };
