@@ -66,7 +66,7 @@ CREATE TABLE friend_requests (
   date_sent bigint NOT NULL
 );
 
--- Remove from friend_requests, friends, partners tables
+-- Remove from friend_requests, friends, partners tables when adding here
 CREATE TABLE blocked (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,

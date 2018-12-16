@@ -1,9 +1,10 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
-const pageFeedQuery = require('../assets/paginate').feed;
+const pagePostsQuery = require('../assets/paginate').posts;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const userExists = require('../assets/queries').userExists;
+const getPostsData = require('../assets/queries').getPostsData;
 
 module.exports = (app, pool) => {
   app.get('/api/feed/:id', wrapper(async (req, res, next) => {
@@ -22,24 +23,23 @@ module.exports = (app, pool) => {
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
       const filterQuery = [
-        `(SELECT user1_id, user2_id, 'partner' FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}')`,
-        `(SELECT user1_id, user2_id, 'friends' FROM friends WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get friends
-        `(SELECT user1_id, user2_id, 'blocked' FROM blocked WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get blocked users
-        `(SELECT id, topic_id, 'topics' FROM topic_subscribers WHERE subscriber_id = '${id}')` // Get topics the user is subscribed to
+        `(SELECT user1_id, user2_id, 'partner' AS table FROM partners WHERE user1_id = '${id}' OR user2_id = '${id}')`,
+        `(SELECT user1_id, user2_id, 'friends' AS table FROM friends WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get friends
+        `(SELECT user1_id, user2_id, 'blocked' AS table FROM blocked WHERE user1_id = '${id}' OR user2_id = '${id}')`, // Get blocked users
+        `(SELECT id, topic_id, 'topics' AS table FROM topic_subscribers WHERE subscriber_id = '${id}')` // Get topics the user is subscribed to
       ].join(' UNION '); // QUESTION: UNION ALL - does not remove duplicates, UNION - removes duplicates?
 
-      const res2 = await userExists(client, id);
-      if (res2.length === 0) {
+      const user = await userExists(client, id);
+      if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const filterRes = await client.query(filterQuery);
         const filterRows = filterRes.rows;
-        // console.log(filterRows);
 
         let partnerQuery = '(false)', friendArr = [], blockedArr = [], topicArr = [];
         for (let i = 0, len = filterRows.length; i < len; i++) {
           let row = filterRows[i];
-          switch (row['?column?']) {
+          switch (row['table']) {
             case 'partner':
               let partnerID = '';
               if (row.user1_id === id) {
@@ -85,49 +85,10 @@ module.exports = (app, pool) => {
         let topicQuery = `(${topicArr.join(' OR ')})`;
         if (topicQuery === '()') topicQuery = '(false)'; // If no subscribed topics, default to false - because in OR
 
-        let whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
-        let feedQuery = pageFeedQuery(whereQuery, order, direction, parseInt(offset), latest);
+        const whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
 
-        console.log('page feed');
-        // console.log(feedQuery);
-        const posts = await client.query(feedQuery);
-        console.log(posts.rows);
-
-        // Only get likes for the posts retrieved, not likes from all time
-        const length = posts.rows.length;
-        const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
-        for (let i = 0; i < length; i++) {
-          filter[i] = `post_id = '${posts.rows[i].id}'`;
-          postsOrder[i] = posts.rows[i].id;
-          postsObj[posts.rows[i].id] = posts.rows[i];
-        }
-
-        if (filter.length === 0) {
-          res.status(200).send({
-            success: true,
-            feed: {
-              post_likes: {},
-              posts: postsObj,
-              order: postsOrder
-            }
-          });
-        } else {
-          let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE user_id = '${id}' AND (${filter.join(' OR ')})`);
-          // Convert to object that maps post_id to likes
-          post_likes = post_likes.rows.reduce((acc, post_like) => {
-            acc[post_like.post_id] = true;
-            return acc;
-          }, {});
-
-          res.status(200).send({
-            success: true,
-            feed: {
-              post_likes,
-              posts: postsObj,
-              order: postsOrder
-            }
-          });
-        }
+        const posts = await getPostsData(client, id, whereQuery, order, direction, offset, latest);
+        res.status(200).send({ success: true, feed: posts });
       }
     } finally {
       client.release();

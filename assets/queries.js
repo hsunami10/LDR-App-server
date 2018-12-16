@@ -1,8 +1,10 @@
+// This file is for functions that RUN queries
 const friendsQuery = require('./paginate').friends;
+const pagePostsQuery = require('./paginate').posts;
 
 const userExists = async (client, id) => {
-  const res = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
-  return res.rows;
+  const user = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
+  return user.rows.length > 0;
 }
 
 const getComments = async (client, user_id, offset, queryString) => {
@@ -114,11 +116,66 @@ const getUserFriends = async (client, user_id, offset) => {
 
 const removeFriendRequestQuery = (senderID, receiverID) => `DELETE FROM friend_requests WHERE sender_id = '${senderID}' AND receiver_id = '${receiverID}'`;
 
+const getBlockedUserIDs = async (client, userID) => {
+  const blocked = await client.query(`SELECT user1_id, user2_id FROM blocked WHERE user1_id = '${userID}' OR user2_id = '${userID}'`);
+  const length = blocked.rows.length;
+  const result = new Array(length);
+
+  for (let i = 0; i < length; i++) {
+    const row = blocked.rows[i];
+    result[i] = (row.user1_id === userID ? row.user2_id : row.user1_id);
+  }
+  return result;
+};
+
+const getPostLikes = async (client, userID, filter) => {
+  let post_likes = await client.query(`SELECT post_id FROM post_likes WHERE user_id = '${userID}' AND (${filter})`);
+  // Convert to object that maps post_id to likes
+  post_likes = post_likes.rows.reduce((acc, post_like) => {
+    acc[post_like.post_id] = true;
+    return acc;
+  }, {});
+  return post_likes;
+}
+
+const getPostsData = async (client, userID, filterQuery, order, direction, offset, latest) => {
+  let postsQuery = pagePostsQuery(filterQuery === '' ? '(true)' : filterQuery, order, direction, parseInt(offset, 10), latest);
+  const posts = await client.query(postsQuery);
+  const length = posts.rows.length;
+  const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
+
+  for (let i = 0; i < length; i++) {
+    filter[i] = `post_id = '${posts.rows[i].id}'`;
+    postsOrder[i] = posts.rows[i].id;
+    postsObj[posts.rows[i].id] = posts.rows[i];
+  }
+
+  if (length === 0) {
+    return {
+      post_likes: {},
+      posts: {},
+      order: [],
+      offset: 0,
+      replace: false
+    };
+  }
+  const post_likes = await getPostLikes(client, userID, filter.join(' OR '));
+  return {
+    post_likes,
+    posts: postsObj,
+    order: postsOrder,
+    offset: parseInt(offset, 10) + postsOrder.length,
+    replace: parseInt(offset, 10) === 0
+  }
+};
+
 module.exports = {
   getComments,
   getUserRequests,
   getPendingRequests,
   getUserFriends,
   userExists,
-  removeFriendRequestQuery
+  removeFriendRequestQuery,
+  getBlockedUserIDs,
+  getPostsData,
 }

@@ -1,5 +1,5 @@
 -- This returns the correct ID to use to inner join data from the users table
-CREATE OR REPLACE FUNCTION get_friend_id(user_id text, other1_id text, other2_id text)
+CREATE OR REPLACE FUNCTION get_other_id(user_id text, other1_id text, other2_id text)
 RETURNS TEXT AS $BODY$
 BEGIN
   IF user_id = other1_id THEN

@@ -1,30 +1,10 @@
-// Pagination queries - functions that return strings ONLY
+// Pagination queries - functions that return string queries ONLY
 const limit = 20;
-
-// RowNum starts at 1
-// Specific user posts
-const posts = (authorID, orderCol, direction, offset) => {
-  let orderQuery = '';
-  switch (orderCol) {
-    case 'date_posted':
-      orderQuery = `posts.date_posted ${direction}`;
-      break;
-    case 'num_likes':
-      orderQuery = `(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) ${direction}`;
-      break;
-    default:
-      orderQuery = `posts.date_posted ${direction}`;
-      break;
-  }
-  return (
-    `SELECT * FROM (SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM posts INNER JOIN users ON posts.author_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE author_id = '${authorID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
-  );
-};
 
 // If offset is 0, get all posts without a "lastestDate"
 // If offset is not 0, then use "lastestDate" - without filtering lastestDate, newest posts will be added on top (like reloading)
 // lastestDate - date_posted of the post at the very top of the user's feed ("first" post you see)
-const feed = (whereQuery, orderCol, direction, offset, latest) => {
+const posts = (whereQuery, orderCol, direction, offset, latest) => {
   let orderQuery = '';
   let benchmark = '';
   switch (orderCol) {
@@ -57,14 +37,13 @@ const interactions = (userID, offset) => (
 );
 
 const friends = (userID, offset) => (
-  `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, friends.date_friended, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_friend_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+  `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, friends.date_friended, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
 );
 
 module.exports = {
   limit,
   commentsLimit,
   posts,
-  feed,
   comments,
   interactions,
   friends

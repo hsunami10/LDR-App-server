@@ -13,8 +13,8 @@ module.exports = (app, pool) => {
   app.get('/api/social/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
-      const res2 = await userExists(client, req.params.id);
-      if (res2.length === 0) {
+      const user = await userExists(client, req.params.id);
+      if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const { offset } = req.query;
@@ -58,8 +58,8 @@ module.exports = (app, pool) => {
     try {
       const senderID = req.params.id;
       const { targetID } = req.body;
-      const res2 = userExists(client, targetID);
-      if (res2.length === 0) {
+      const user = userExists(client, targetID);
+      if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const dateSent = moment().unix();
@@ -77,13 +77,13 @@ module.exports = (app, pool) => {
     try {
       const { id } = req.params;
       const { targetID } = req.body;
-      let res2, cancelled;
-      [res2, cancelled] = await Promise.all([
+      let user, cancelled;
+      [user, cancelled] = await Promise.all([
         userExists(client, targetID),
         client.query(`SELECT id FROM friend_requests WHERE sender_id = '${targetID}' AND receiver_id = '${id}'`)
       ]);
       // Don't need to check if the same user sent a friend request, because that should not happen
-      if (res2.length === 0) {
+      if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else if (cancelled.rows.length === 0) { // Request already cancelled before accepted
         res.status(200).send({ success: false, error: REQUEST_CANCELLED_MSG });

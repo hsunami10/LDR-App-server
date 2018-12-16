@@ -11,13 +11,12 @@ const getUserRequests = require('../assets/queries').getUserRequests;
 const getPendingRequests = require('../assets/queries').getPendingRequests;
 const getUserFriends = require('../assets/queries').getUserFriends;
 
-const pagePostsQuery = require('../assets/paginate').posts;
 const pageInteractionsQuery = require('../assets/paginate').interactions;
-const pageFeedQuery = require('../assets/paginate').feed;
+const pagePostsQuery = require('../assets/paginate').posts;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
-    // TODO: Show NO_USER_MSG, success: false - if user does not exists
+    // TODO: Change to ONLY get posts - do not get interactionsn or friends - lazy loading
     .get(wrapper(async (req, res, next) => { // TODO: Figure out how to lazy load
       // According to the type "private" or "public" or "edit"
       // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
@@ -31,7 +30,7 @@ module.exports = (app, pool) => {
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
           const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
-          const postsQuery = pagePostsQuery(targetID, 'date_posted', 'DESC', 0);
+          const postsQuery = pagePostsQuery(`posts.author_id = '${targetID}'`, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           // TODO: Remember to take your (user_id) blocked users into account
           // const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
@@ -56,7 +55,7 @@ module.exports = (app, pool) => {
         const interLen = interactions.rows.length;
         const interOrder = new Array(interLen), interObj = {};
 
-        const friendsLen = friends.rows.length;
+        // const friendsLen = friends.rows.length;
 
         let flag = true;
         let i = 0;
@@ -135,4 +134,21 @@ module.exports = (app, pool) => {
       await pool.query(`SELECT * FROM delete_user('${req.params.id}')`);
       res.sendStatus(200);
     }))
+
+  app.get('/api/user/get-posts/:id', wrapper(async (req, res, next) => {
+    const targetID = req.params.id;
+    const { user_id, offset, order, direction } = req.query;
+    res.sendStatus(200);
+  }))
+
+  app.get('/api/user/get-interactions/:id', wrapper(async (req, res, next) => {
+    const targetID = req.params.id;
+    const { user_id, offset } = req.query;
+    res.sendStatus(200);
+  }))
+
+  app.get('/api/user/get-friends/:id', wrapper(async (req, res, next) => {
+    const targetID = req.params.id;
+    const { user_id, offset } = req.query;
+  }));
 };
