@@ -40,6 +40,10 @@ const friends = (userID, offset) => (
   `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, friends.date_friended, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
 );
 
+const users = (userID, offset) => (
+  `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, users.date_joined, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+);
+
 module.exports = {
   limit,
   commentsLimit,

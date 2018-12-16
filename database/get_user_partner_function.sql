@@ -9,8 +9,7 @@ DECLARE
   user2_id text;
   r record;
 BEGIN
-  user1_id := (SELECT partners.user1_id FROM partners WHERE partners.user1_id = user_id OR partners.user2_id = user_id);
-  user2_id := (SELECT partners.user2_id FROM partners WHERE partners.user1_id = user_id OR partners.user2_id = user_id);
+  SELECT partners.user1_id, partners.user2_id FROM partners WHERE partners.user1_id = user_id OR partners.user2_id = user_id INTO user1_id, user2_id;
 
   IF user1_id = user_id THEN
   	user_id = user2_id;

@@ -29,7 +29,7 @@ module.exports = (app, pool) => {
         if (type === 'private' || type === 'public') {
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
-          const usersQuery = `SELECT id, username, profile_pic, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
+          const usersQuery = `SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
           const postsQuery = pagePostsQuery(`posts.author_id = '${targetID}'`, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           // TODO: Remember to take your (user_id) blocked users into account

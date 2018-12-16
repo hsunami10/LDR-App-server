@@ -8,7 +8,7 @@ module.exports = (app, pool) => {
   // ======================================= Create Profile =======================================
   app.put('/api/profile/create', upload.single('clientImage'), wrapper(async (req, res, next) => {
     // NOTE: Make sure the path has a / as the first character
-    const { code, user_id } = req.body;
+    const { bio, code, user_id } = req.body;
     let path = '';
     if (req.file) {
       path = req.file.path.substring(7); // Get rid of "public/"
@@ -18,7 +18,7 @@ module.exports = (app, pool) => {
     // TODO: Find out how to use code here
     // Check to see if code matches in partners table
     // Send success or failed data, instead of only sendStatus
-    await pool.query(`UPDATE users SET profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
+    await pool.query(`UPDATE users SET bio = ${bio.length === 0 ? `''` : `'${bio}'`} profile_pic = ${path ? `'${path}'` : null} WHERE id = '${user_id}'`);
     res.sendStatus(200);
   }));
 };

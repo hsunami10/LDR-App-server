@@ -169,6 +169,8 @@ const getPostsData = async (client, userID, filterQuery, order, direction, offse
   }
 };
 
+// TODO: Write a function that gets a list of users given a filter
+
 module.exports = {
   getComments,
   getUserRequests,
@@ -177,5 +179,6 @@ module.exports = {
   userExists,
   removeFriendRequestQuery,
   getBlockedUserIDs,
+
   getPostsData,
 }

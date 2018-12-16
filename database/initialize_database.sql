@@ -6,6 +6,7 @@ CREATE TABLE users (
   username text NOT NULL UNIQUE,
   lowercase_username text NOT NULL UNIQUE, -- for ignoring case sensitivity
   password text NOT NULL,
+  bio text NOT NULL DEFAULT '',
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
   date_joined bigint NOT NULL,
