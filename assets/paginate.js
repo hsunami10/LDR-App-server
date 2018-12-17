@@ -1,3 +1,6 @@
+
+// NOTE: Search up HOW_TO_PAGE for pagination problems
+
 // Pagination queries - functions that return string queries ONLY
 const limit = 20;
 
@@ -13,7 +16,7 @@ const posts = (whereQuery, orderCol, direction, offset, latest) => {
       benchmark = `posts.date_posted <= ${latest} AND`;
       break;
     case 'num_likes':
-      // TODO: BUG: QUESTION: How to page and order by number of likes?
+      // TODO: HOW_TO_PAGE
       orderQuery = `(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) ${direction}`;
       benchmark = `(SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) <= ${latest} AND`
       break;
@@ -23,7 +26,7 @@ const posts = (whereQuery, orderCol, direction, offset, latest) => {
       break;
   }
   return (
-    `SELECT * FROM (SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM posts INNER JOIN users ON posts.author_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE ${offset === 0 ? '' : benchmark} (${whereQuery})) AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+    `SELECT * FROM (SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) as num_comments, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM posts INNER JOIN users ON posts.author_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE ${offset === 0 ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery})) AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
   )
 };
 
@@ -40,9 +43,39 @@ const friends = (userID, offset) => (
   `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, friends.date_friended, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
 );
 
-const users = (userID, offset) => (
-  `SELECT * FROM (SELECT users.id, users.username, users.profile_pic, users.date_joined, 'friend' AS type, ROW_NUMBER () OVER (ORDER BY friends.date_friended DESC) AS RowNum FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
-);
+// NOTE: Same format as routes/users.js - get user except adding num_friends
+const users = (userID, whereQuery, offset, orderCol, direction, latest) => {
+  let orderQuery = '';
+  let benchmark = '';
+  switch (orderCol) {
+    case 'date_joined': // Order by both directions
+      if (direction === 'DESC') {
+        orderQuery = `date_joined ${direction}`;
+        benchmark = `date_joined <= ${latest} AND`;
+      } else {
+        orderQuery = `date_joined ${direction}`;
+        benchmark = `date_joined >= ${latest} AND`;
+      }
+      break;
+    case 'num_friends':
+      // TODO: HOW_TO_PAGE
+      orderQuery = `(SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) ${direction}`;
+      benchmark = `(SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) <= ${latest} AND`
+      break;
+    default:
+      if (direction === 'DESC') {
+        orderQuery = `date_joined ${direction}`;
+        benchmark = `date_joined <= ${latest} AND`;
+      } else {
+        orderQuery = `date_joined ${direction}`;
+        benchmark = `date_joined >= ${latest} AND`;
+      }
+      break;
+  }
+  return (
+    `SELECT * FROM (SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) AS num_friends, (SELECT get_user_relation('${userID}', users.id)) AS type, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM users WHERE id != '${userID}' AND id != '' AND ${offset === 0 ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery})) AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+  );
+};
 
 module.exports = {
   limit,
@@ -50,5 +83,6 @@ module.exports = {
   posts,
   comments,
   interactions,
-  friends
+  friends,
+  users
 };

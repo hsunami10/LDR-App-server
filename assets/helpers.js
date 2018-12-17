@@ -1,4 +1,4 @@
-const queryDataToOrderAndObj = (queryData, propToMap) => {
+const rowsToOrderAndObj = (queryData, propToMap) => {
   const length = queryData.length;
   let order = new Array(length), data = {};
   for (let i = 0; i < length; i++) {
@@ -11,5 +11,5 @@ const queryDataToOrderAndObj = (queryData, propToMap) => {
 }
 
 module.exports = {
-  queryDataToOrderAndObj,
+  rowsToOrderAndObj,
 };

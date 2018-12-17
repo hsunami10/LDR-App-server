@@ -4,8 +4,9 @@ const wrapper = require('../assets/wrapper');
 const userExists = require('../assets/queries').userExists;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const pagePostsQuery = require('../assets/paginate').posts;
-const queryDataToOrderAndObj = require('../assets/helpers').queryDataToOrderAndObj;
+const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const getPostsData = require('../assets/queries').getPostsData;
+const getUsersData = require('../assets/queries').getUsersData;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 
 module.exports = (app, pool) => {
@@ -26,8 +27,8 @@ module.exports = (app, pool) => {
           return `posts.author_id != '${id}'`;
         }).join(' AND ');
 
-        const posts = await getPostsData(client, id, filterQuery, order, direction, offset, latest);
-        res.status(200).send({ success: true, posts });
+        const result = await getPostsData(client, id, filterQuery, order, direction, offset, latest);
+        res.status(200).send({ success: true, result });
       }
     } finally {
       client.release();
@@ -35,7 +36,28 @@ module.exports = (app, pool) => {
   }))
 
   app.get('/api/discover/users/:id', wrapper(async (req, res, next) => {
-    res.sendStatus(200);
+    const client = await pool.connect();
+    try {
+      let user, blocked;
+      const { id } = req.params;
+      [user, blocked] = await Promise.all([
+        userExists(client, id),
+        getBlockedUserIDs(client, id)
+      ]);
+      if (!user) {
+        res.status(200).send({ success: false, error: NO_USER_MSG });
+      } else {
+        const { offset, order, direction, latest } = req.query;
+        const filterQuery = blocked.map(id => {
+          return `users.id != '${id}'`;
+        }).join(' AND ');
+
+        const result = await getUsersData(client, id, filterQuery, order, direction, offset, latest);
+        res.status(200).send({ success: true, result });
+      }
+    } finally {
+      client.release();
+    }
   }))
 
   app.get('/api/discover/topics/:id', wrapper(async (req, res, next) => {

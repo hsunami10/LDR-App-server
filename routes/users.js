@@ -17,6 +17,7 @@ const pagePostsQuery = require('../assets/paginate').posts;
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
     // TODO: Change to ONLY get posts - do not get interactionsn or friends - lazy loading
+    // NOTE: Similar to assets.paginate.js - users, except no num_friends
     .get(wrapper(async (req, res, next) => { // TODO: Figure out how to lazy load
       // According to the type "private" or "public" or "edit"
       // "private" - stores (own) profile in state, "public" - seeing public profiles, both get the same data, different client actions
@@ -29,7 +30,7 @@ module.exports = (app, pool) => {
         if (type === 'private' || type === 'public') {
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
-          const usersQuery = `SELECT id, username, profile_pic, bio, coordinates, date_joined, active, user_type FROM users WHERE id = '${targetID}' AND deleted = false`;
+          const usersQuery = `SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT get_user_relation('${user_id}', users.id)) AS type FROM users WHERE id = '${targetID}' AND deleted = false`;
           const postsQuery = pagePostsQuery(`posts.author_id = '${targetID}'`, 'date_posted', 'DESC', 0);
           const interactionsQuery = pageInteractionsQuery(targetID, 0);
           // TODO: Remember to take your (user_id) blocked users into account

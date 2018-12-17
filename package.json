@@ -5,7 +5,8 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start-dev": "nodemon index.js",
-    "start": "node index.js"
+    "start": "node index.js",
+    "start-prod": "forever start index.js"
   },
   "repository": "git@github.com:hsunami10/LDR-App-server.git",
   "author": "Michael Hsu <michael100.hsu@gmail.com>",
@@ -14,6 +15,7 @@
     "body-parser": "^1.18.3",
     "express": "^4.16.3",
     "express-session": "^1.15.6",
+    "forever": "^0.15.3",
     "mailgun-js": "^0.20.0",
     "moment": "^2.22.2",
     "morgan": "^1.9.0",

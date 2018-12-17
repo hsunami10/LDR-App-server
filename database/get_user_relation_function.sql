@@ -1,3 +1,4 @@
+-- Returns 4 user relations - request, friend, regular, pending - for user interactions
 CREATE OR REPLACE FUNCTION get_user_relation(user_id text, other_id text)
 RETURNS TEXT AS $BODY$
 DECLARE

@@ -1,6 +1,8 @@
 // This file is for functions that RUN queries
 const friendsQuery = require('./paginate').friends;
 const pagePostsQuery = require('./paginate').posts;
+const pageUsersQuery = require('./paginate').users;
+const rowsToOrderAndObj = require('./helpers').rowsToOrderAndObj;
 
 const userExists = async (client, id) => {
   const user = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
@@ -139,7 +141,7 @@ const getPostLikes = async (client, userID, filter) => {
 }
 
 const getPostsData = async (client, userID, filterQuery, order, direction, offset, latest) => {
-  let postsQuery = pagePostsQuery(filterQuery === '' ? '(true)' : filterQuery, order, direction, parseInt(offset, 10), latest);
+  const postsQuery = pagePostsQuery(filterQuery, order, direction, parseInt(offset, 10), latest);
   const posts = await client.query(postsQuery);
   const length = posts.rows.length;
   const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
@@ -166,10 +168,21 @@ const getPostsData = async (client, userID, filterQuery, order, direction, offse
     order: postsOrder,
     offset: parseInt(offset, 10) + postsOrder.length,
     replace: parseInt(offset, 10) === 0
-  }
+  };
 };
 
-// TODO: Write a function that gets a list of users given a filter
+const getUsersData = async (client, userID, filterQuery, order, direction, offset, latest) => {
+  const usersQuery = pageUsersQuery(userID, filterQuery, parseInt(offset, 10), order, direction, latest);
+  console.log(usersQuery);
+  const users = await client.query(usersQuery);
+  const obj = rowsToOrderAndObj(users.rows, 'id');
+  return {
+    order: obj.order,
+    users: obj.data,
+    offset: parseInt(offset, 10) + obj.order.length,
+    replace: parseInt(offset, 10) === 0
+  };
+};
 
 module.exports = {
   getComments,
@@ -181,4 +194,5 @@ module.exports = {
   getBlockedUserIDs,
 
   getPostsData,
+  getUsersData,
 }
