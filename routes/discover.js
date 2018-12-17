@@ -3,10 +3,10 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const userExists = require('../assets/queries').userExists;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
-const pagePostsQuery = require('../assets/paginate').posts;
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const getPostsData = require('../assets/queries').getPostsData;
 const getUsersData = require('../assets/queries').getUsersData;
+const getTopicsData = require('../assets/queries').getTopicsData;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 
 module.exports = (app, pool) => {
@@ -61,6 +61,19 @@ module.exports = (app, pool) => {
   }))
 
   app.get('/api/discover/topics/:id', wrapper(async (req, res, next) => {
-    res.sendStatus(200);
+    const client = await pool.connect();
+    try {
+      const { id } = req.params;
+      const user = await userExists(client, id);
+      if (!user) {
+        res.status(200).send({ success: false, error: NO_USER_MSG });
+      } else {
+        const { offset, order, direction, latest } = req.query;
+        const result = await getTopicsData(client, id, '', order, direction, offset, latest);
+        res.status(200).send({ success: true, result });
+      }
+    } finally {
+      client.release();
+    }
   }))
 };

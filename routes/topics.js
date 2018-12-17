@@ -2,6 +2,9 @@ const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const upload = require('../config/multer');
+const userExists = require('../assets/queries').userExists;
+const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
+const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 
 module.exports = (app, pool) => {
   app.route('/api/topics/:id')
@@ -22,11 +25,23 @@ module.exports = (app, pool) => {
       // req.params.id - topic id
     }))
 
+  // NOTE: Similar format to assets/paginate - topics
   app.get('/api/subscribed-topics/:id', wrapper(async (req, res, next) => {
-    const { order, direction } = req.query;
-    const user_id = req.params.id;
-    const res2 = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${req.params.id}' ORDER BY ${order} ${direction}`);
-    res.status(200).send(res2.rows);
+    const client = await pool.connect();
+    try {
+      const { id } = req.params;
+      const user = await userExists(client, id);
+      if (!user) {
+        res.status(200).send({ success: false, error: NO_USER_MSG });
+      } else {
+        const { order, direction } = req.query;
+        const topics = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, true AS is_subscriber, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${id}' ORDER BY ${order} ${direction}`);
+        const result = rowsToOrderAndObj(topics.rows, 'id');
+        res.status(200).send({ success: true, result });
+      }
+    } finally {
+      client.release();
+    }
   }));
 
   app.post('/api/topics/create/:id', upload.single('clientImage'), wrapper(async (req, res, next) => {

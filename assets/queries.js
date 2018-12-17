@@ -2,6 +2,7 @@
 const friendsQuery = require('./paginate').friends;
 const pagePostsQuery = require('./paginate').posts;
 const pageUsersQuery = require('./paginate').users;
+const pageTopicsQuery = require('./paginate').topics;
 const rowsToOrderAndObj = require('./helpers').rowsToOrderAndObj;
 
 const userExists = async (client, id) => {
@@ -173,7 +174,6 @@ const getPostsData = async (client, userID, filterQuery, order, direction, offse
 
 const getUsersData = async (client, userID, filterQuery, order, direction, offset, latest) => {
   const usersQuery = pageUsersQuery(userID, filterQuery, parseInt(offset, 10), order, direction, latest);
-  console.log(usersQuery);
   const users = await client.query(usersQuery);
   const obj = rowsToOrderAndObj(users.rows, 'id');
   return {
@@ -183,6 +183,18 @@ const getUsersData = async (client, userID, filterQuery, order, direction, offse
     replace: parseInt(offset, 10) === 0
   };
 };
+
+const getTopicsData = async (client, userID, filterQuery, order, direction, offset, latest) => {
+  const topicsQuery = pageTopicsQuery(userID, filterQuery, parseInt(offset, 10), order, direction, latest);
+  const topics = await client.query(topicsQuery);
+  const obj = rowsToOrderAndObj(topics.rows, 'id');
+  return {
+    order: obj.order,
+    topics: obj.data,
+    offset: parseInt(offset, 10) + obj.order.length,
+    replace: parseInt(offset, 10) === 0
+  }
+}
 
 module.exports = {
   getComments,
@@ -195,4 +207,5 @@ module.exports = {
 
   getPostsData,
   getUsersData,
+  getTopicsData,
 }
