@@ -17,12 +17,12 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        const { offset } = req.query;
+        const { last_id, last_data } = req.query;
         let requests, pending, friends;
         [requests, pending, friends] = await Promise.all([
           getUserRequests(client, req.params.id),
           getPendingRequests(client, req.params.id),
-          getUserFriends(client, req.params.id, parseInt(offset, 10))
+          getUserFriends(client, req.params.id, 'date_friended', 'DESC', last_id, last_data)
         ]);
         const all_users = {
           ...requests.data,
@@ -48,8 +48,8 @@ module.exports = (app, pool) => {
   }))
 
   app.get('/api/social/get-friends/:id', wrapper(async (req, res, next) => {
-    const { offset } = req.query;
-    const friends = await getUserFriends(pool, req.params.id, parseInt(offset, 10));
+    const { order, direction, last_id, last_data } = req.query;
+    const friends = await getUserFriends(pool, req.params.id, order, direction, last_id, last_data);
     res.status(200).send(friends);
   }))
 

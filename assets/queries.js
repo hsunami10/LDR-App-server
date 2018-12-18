@@ -1,5 +1,5 @@
 // This file is for functions that RUN queries
-const friendsQuery = require('./paginate').friends;
+const pageFriendsQuery = require('./paginate').friends;
 const pagePostsQuery = require('./paginate').posts;
 const pageUsersQuery = require('./paginate').users;
 const pageTopicsQuery = require('./paginate').topics;
@@ -10,7 +10,7 @@ const userExists = async (client, id) => {
   return user.rows.length > 0;
 }
 
-const getComments = async (client, user_id, offset, queryString) => {
+const getComments = async (client, user_id, queryString) => {
   const comments = await client.query(queryString);
   const length = comments.rows.length;
 
@@ -20,13 +20,11 @@ const getComments = async (client, user_id, offset, queryString) => {
     order[length - i - 1] = comments.rows[i].id; // Want latest element to be at bottom of screen, not top
   }
 
-  const newOffset = parseInt(offset, 10) + order.length;
   if (order.length === 0) {
     return {
       comment_likes: {},
       comments: commentsObj,
-      order,
-      offset: newOffset
+      order
     };
   } else {
     let comment_likes = await client.query(`SELECT comment_id FROM comment_likes WHERE user_id = '${user_id}'`);
@@ -38,8 +36,7 @@ const getComments = async (client, user_id, offset, queryString) => {
     return {
       comment_likes,
       comments: commentsObj,
-      order,
-      offset: newOffset
+      order
     };
   }
 };
@@ -90,31 +87,16 @@ const getPendingRequests = async (client, user_id) => {
   }
 };
 
-const getUserFriends = async (client, user_id, offset) => {
-  const friends = await client.query(friendsQuery(user_id, offset));
-  if (friends.rows.length === 0) {
-    return {
-      data: {},
-      order: [],
-      offset,
-      keepPaging: false
-    };
-  } else {
-    const length = friends.rows.length;
-    let friendsObj = {};
-    let friendsOrder = new Array(friends.rows.length);
-    for (let i = 0; i < length; i++) {
-      const friend = friends.rows[i];
-      friendsObj[friend.id] = friend;
-      friendsOrder[i] = friend.id;
-    }
-    return {
-      data: friendsObj,
-      order: friendsOrder,
-      offset: offset + friendsOrder.length,
-      keepPaging: friendsOrder.length !== 0
-    };
-  }
+const getUserFriends = async (client, userID, order, direction, lastID, lastData) => {
+  const friendsQuery = pageFriendsQuery(userID, order, direction, lastID, lastData);
+  const friends = await client.query(friendsQuery);
+  const obj = rowsToOrderAndObj(friends.rows, 'id');
+  return {
+    order: obj.order,
+    data: obj.data,
+    replace: lastID === '',
+    keepPaging: obj.order.length !== 0
+  };
 };
 
 const removeFriendRequestQuery = (senderID, receiverID) => `DELETE FROM friend_requests WHERE sender_id = '${senderID}' AND receiver_id = '${receiverID}'`;
@@ -141,8 +123,8 @@ const getPostLikes = async (client, userID, filter) => {
   return post_likes;
 }
 
-const getPostsData = async (client, userID, filterQuery, order, direction, offset, latest) => {
-  const postsQuery = pagePostsQuery(filterQuery, order, direction, parseInt(offset, 10), latest);
+const getPostsData = async (client, userID, filterQuery, order, direction, lastID, lastData) => {
+  const postsQuery = pagePostsQuery(filterQuery, order, direction, lastID, lastData);
   const posts = await client.query(postsQuery);
   const length = posts.rows.length;
   const filter = new Array(length), postsOrder = new Array(length), postsObj = {};
@@ -158,8 +140,8 @@ const getPostsData = async (client, userID, filterQuery, order, direction, offse
       post_likes: {},
       posts: {},
       order: [],
-      offset: 0,
-      replace: false
+      replace: false,
+      keepPaging: false,
     };
   }
   const post_likes = await getPostLikes(client, userID, filter.join(' OR '));
@@ -167,32 +149,32 @@ const getPostsData = async (client, userID, filterQuery, order, direction, offse
     post_likes,
     posts: postsObj,
     order: postsOrder,
-    offset: parseInt(offset, 10) + postsOrder.length,
-    replace: parseInt(offset, 10) === 0
+    replace: lastID === '',
+    keepPaging: postsOrder.length !== 0
   };
 };
 
-const getUsersData = async (client, userID, filterQuery, order, direction, offset, latest) => {
-  const usersQuery = pageUsersQuery(userID, filterQuery, parseInt(offset, 10), order, direction, latest);
+const getUsersData = async (client, userID, filterQuery, order, direction, lastID, lastData) => {
+  const usersQuery = pageUsersQuery(userID, filterQuery, order, direction, lastID, lastData);
   const users = await client.query(usersQuery);
   const obj = rowsToOrderAndObj(users.rows, 'id');
   return {
     order: obj.order,
     users: obj.data,
-    offset: parseInt(offset, 10) + obj.order.length,
-    replace: parseInt(offset, 10) === 0
+    replace: lastID === '',
+    keepPaging: obj.order.length !== 0
   };
 };
 
-const getTopicsData = async (client, userID, filterQuery, order, direction, offset, latest) => {
-  const topicsQuery = pageTopicsQuery(userID, filterQuery, parseInt(offset, 10), order, direction, latest);
+const getTopicsData = async (client, userID, filterQuery, order, direction, lastID, lastData) => {
+  const topicsQuery = pageTopicsQuery(userID, filterQuery, order, direction, lastID, lastData);
   const topics = await client.query(topicsQuery);
   const obj = rowsToOrderAndObj(topics.rows, 'id');
   return {
     order: obj.order,
     topics: obj.data,
-    offset: parseInt(offset, 10) + obj.order.length,
-    replace: parseInt(offset, 10) === 0
+    replace: lastID === '',
+    keepPaging: obj.order.length !== 0
   }
 }
 

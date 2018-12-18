@@ -12,7 +12,7 @@ module.exports = (app, pool) => {
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
-        const { offset, latest_date, post_id } = req.query;
+        const { post_id, last_id, last_date } = req.query;
         const user_id = req.params.id;
         const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
         if (res2.rows.length === 0) {
@@ -21,8 +21,7 @@ module.exports = (app, pool) => {
           const result = await getComments(
             client,
             user_id,
-            offset,
-            pageCommentsQuery(post_id, parseInt(offset), latest_date)
+            pageCommentsQuery(post_id, last_id, last_date)
           );
           res.status(200).send({ success: true, comments: result });
         }

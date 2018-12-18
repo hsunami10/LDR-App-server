@@ -31,10 +31,10 @@ module.exports = (app, pool) => {
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
           const usersQuery = `SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT get_user_relation('${user_id}', users.id)) AS type FROM users WHERE id = '${targetID}' AND deleted = false`;
-          const postsQuery = pagePostsQuery(`posts.author_id = '${targetID}'`, 'date_posted', 'DESC', 0);
-          const interactionsQuery = pageInteractionsQuery(targetID, 0);
+          const postsQuery = pagePostsQuery(`posts.author_id = '${targetID}'`, 'date_posted', 'DESC', '', '');
+          const interactionsQuery = pageInteractionsQuery(targetID, '', '');
           // TODO: Remember to take your (user_id) blocked users into account
-          // const friendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
+          // const pageFriendsQuery = `SELECT id, user1_id, user2_id, date_friended FROM friends WHERE user1_id = '${targetID}' OR user2_id = '${targetID}'`; // TODO: Page friends query here
 
           // Get friends and subscribers when the tabs (in view profile screen) are visited
           [partners, users, posts, interactions, friends] = await Promise.all([
@@ -42,7 +42,7 @@ module.exports = (app, pool) => {
             client.query(usersQuery),
             client.query(postsQuery),
             client.query(interactionsQuery),
-            // client.query(friendsQuery)
+            // client.query(pageFriendsQuery)
           ]);
         } else {
           throw new Error('get: /api/user, type has to be either "private", "public"');
@@ -105,13 +105,11 @@ module.exports = (app, pool) => {
             user: {
               ...users.rows[0],
               posts: {
-                offset: postsLen,
                 data: postsObj,
                 order: postsOrder,
                 post_likes // Includes post_likes from posts AND interactions
               },
               interactions: {
-                offset: interLen,
                 data: interObj,
                 order: interOrder
               },

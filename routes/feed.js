@@ -1,7 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
-const pagePostsQuery = require('../assets/paginate').posts;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const userExists = require('../assets/queries').userExists;
 const getPostsData = require('../assets/queries').getPostsData;
@@ -18,7 +17,7 @@ module.exports = (app, pool) => {
       const { id } = req.params;
       // order - newest (default) - date_joined, popular - num_likes, nearest - coordinates
       // direction - newest (default) - DESC, popular - DESC, nearest - ASC (or something else)
-      const { offset, order, direction, latest } = req.query;
+      const { offset, order, direction, last_id, last_data } = req.query;
 
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
@@ -87,7 +86,7 @@ module.exports = (app, pool) => {
 
         const whereQuery = `posts.author_id = '${id}' OR (${blockQuery} AND (${partnerQuery} OR ${friendQuery} OR ${topicQuery}))`;
 
-        const posts = await getPostsData(client, id, whereQuery, order, direction, offset, latest);
+        const posts = await getPostsData(client, id, whereQuery, order, direction, last_id, last_data);
         res.status(200).send({ success: true, feed: posts });
       }
     } finally {

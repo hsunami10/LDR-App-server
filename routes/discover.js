@@ -47,12 +47,12 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        const { offset, order, direction, latest } = req.query;
+        const { order, direction, last_id, last_data } = req.query;
         const filterQuery = blocked.map(id => {
           return `users.id != '${id}'`;
         }).join(' AND ');
 
-        const result = await getUsersData(client, id, filterQuery, order, direction, offset, latest);
+        const result = await getUsersData(client, id, filterQuery, order, direction, last_id, last_data);
         res.status(200).send({ success: true, result });
       }
     } finally {
@@ -68,8 +68,8 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        const { offset, order, direction, latest } = req.query;
-        const result = await getTopicsData(client, id, '', order, direction, offset, latest);
+        const { order, direction, last_id, last_data } = req.query;
+        const result = await getTopicsData(client, id, '', order, direction, last_id, last_data);
         res.status(200).send({ success: true, result });
       }
     } finally {

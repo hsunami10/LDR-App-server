@@ -11,7 +11,7 @@ module.exports = (app, pool) => {
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
-        const { earliest_date, post_id } = req.query;
+        const { length, post_id } = req.query;
         const user_id = req.params.id;
         const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
         if (res2.rows.length === 0) {
@@ -23,14 +23,15 @@ module.exports = (app, pool) => {
           const postRes = await client.query(postsQuery);
 
           // Get comments
-          // NOTE: Match format of helpers/paginate.comments query
           let commentsQuery = '';
-          if (parseInt(earliest_date, 10) === 0) { // True only if no comments when refreshing
-            commentsQuery = pageCommentsQuery(post_id, 0, moment().unix());
+          if (parseInt(length, 10) === 0) {
+            // If there were no comments when refreshing, then grab the latest with default limit
+            commentsQuery = pageCommentsQuery(post_id, '', '');
           } else {
-            commentsQuery = `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes, ROW_NUMBER () OVER (ORDER BY comments.date_sent DESC) AS RowNum FROM comments INNER JOIN users ON users.id = comments.author_id WHERE comments.date_sent >= ${earliest_date} AND comments.post_id = '${post_id}'`;
+            // If there were comments when refreshing, then grab the latest "length" as the limit
+            commentsQuery = pageCommentsQuery(post_id, '', '', parseInt(length, 10));
           }
-          const comments = await getComments(client, user_id, 0, commentsQuery);
+          const comments = await getComments(client, user_id, commentsQuery);
 
           res.status(200).send({
             success: true,
