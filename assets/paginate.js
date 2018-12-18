@@ -110,7 +110,7 @@ const topics = (userID, whereQuery, offset, orderCol, direction, latest) => {
       break;
   }
   return (
-    `SELECT * FROM (SELECT id, name, lowercase_name, topic_pic, description, date_created, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers, (SELECT is_topic_subscriber('${userID}', topics.id)) AS is_subscriber, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM topics WHERE ${offset === 0 ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery})) AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
+    `SELECT * FROM (SELECT id, name, lowercase_name, topic_pic, description, date_created, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers, (SELECT get_topic_relation('${userID}', topics.id)) AS type, ROW_NUMBER () OVER (ORDER BY ${orderQuery}) AS RowNum FROM topics WHERE ${offset === 0 ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery})) AS RowConstrainedResult WHERE RowNum > ${offset} AND RowNum <= ${offset + limit} ORDER BY RowNum`
   );
 };
 

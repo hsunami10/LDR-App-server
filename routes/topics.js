@@ -26,7 +26,7 @@ module.exports = (app, pool) => {
     }))
 
   // NOTE: Similar format to assets/paginate - topics
-  app.get('/api/subscribed-topics/:id', wrapper(async (req, res, next) => {
+  app.get('/api/topics/subscribed/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -35,7 +35,7 @@ module.exports = (app, pool) => {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const { order, direction } = req.query;
-        const topics = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, true AS is_subscriber, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${id}' ORDER BY ${order} ${direction}`);
+        const topics = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, 'already_subscribed' AS type, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${id}' ORDER BY ${order} ${direction}`);
         const result = rowsToOrderAndObj(topics.rows, 'id');
         res.status(200).send({ success: true, result });
       }
@@ -70,7 +70,10 @@ module.exports = (app, pool) => {
             name,
             lowercase_name: name.toLowerCase(),
             topic_pic: path,
-            num_subscribers: 1
+            description,
+            date_created: date,
+            num_subscribers: 1,
+            type: 'already_subscribed'
           }
         });
       } else {
@@ -79,5 +82,21 @@ module.exports = (app, pool) => {
     } finally {
       client.release();
     }
+  }))
+
+  app.post('/api/topics/subscribe/:id', wrapper(async (req, res, next) => {
+    const { id } = req.params;
+    const { topic_id } = req.body;
+    const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];
+    await pool.query(`INSERT INTO topic_subscribers VALUES ($1, $2, $3, $4, $5, $6)`, cols);
+    res.sendStatus(200);
+  }))
+
+  app.delete('/api/topics/unsubscribe/:id', wrapper(async (req, res, next) => {
+    const { id } = req.params;
+    const { topic_id } = req.body;
+    const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];
+    await pool.query(`DELETE FROM topic_subscribers WHERE subscriber_id = '${id}' AND topic_id = '${topic_id}'`);
+    res.sendStatus(200);
   }))
 };
