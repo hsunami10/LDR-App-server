@@ -9,17 +9,17 @@ const comments = (postID, lastID, lastDate, commentsLimit = 5) => (
 );
 
 // Only allow one ordering - date
-const interactions = (userID, lastID, lastDate) => (
-  `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE interactions.user_id = '${userID}' ${lastID === '' ? '' : `AND (interactions.date_updated, posts.id) < (${lastDate}, '${lastID}')`} ORDER BY interactions.date_updated DESC, posts.id DESC FETCH FIRST ${limit} ROWS ONLY`
+const interactions = (userID, filterQuery, lastID, lastDate) => (
+  `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE (interactions.user_id = '${userID}') AND (${filterQuery === '' ? 'true' : filterQuery}) ${lastID === '' ? '' : `AND (interactions.date_updated, posts.id) < (${lastDate}, '${lastID}')`} ORDER BY interactions.date_updated DESC, posts.id DESC FETCH FIRST ${limit} ROWS ONLY`
 );
 
-const friends = (userID, orderCol, direction, lastID, lastData) => {
+const friends = (userID, filterQuery, orderCol, direction, lastID, lastData) => {
   let orderQuery = '';
   let benchmark = '';
   switch (orderCol) {
     case 'date_friended': // Recently friended - DESC
       orderQuery = `friends.date_friended ${direction}`;
-      benchmark = `(friends.date_friended, users.id) < (${lastData}, '${lastID}')`;
+      benchmark = `(friends.date_friended, users.id) < (${lastData}, '${lastID}') AND`;
       break;
     case 'date_joined': // Order by both directions
       orderQuery = `users.date_joined ${direction}`;
@@ -37,13 +37,13 @@ const friends = (userID, orderCol, direction, lastID, lastData) => {
       break;
   }
   return (
-    `SELECT users.id, users.username, users.profile_pic, friends.date_friended, users.date_joined, 'friend' AS type FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE ${lastID === '' ? '' : benchmark} (friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') ORDER BY ${orderQuery}, users.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
+    `SELECT users.id, users.username, users.profile_pic, friends.date_friended, users.date_joined, 'friend' AS type FROM friends INNER JOIN users ON (SELECT get_other_id('${userID}', friends.user1_id, friends.user2_id)) = users.id WHERE ${lastID === '' ? '' : benchmark} (${filterQuery === '' ? 'true' : filterQuery}) AND (friends.user1_id = '${userID}' OR friends.user2_id = '${userID}') ORDER BY ${orderQuery}, users.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
   );
 };
 
 // lastID - the ID to order on - default is '' (for initial fetch "offset = 0")
 // lastData - the data to order on
-const posts = (whereQuery, orderCol, direction, lastID, lastData) => {
+const posts = (filterQuery, orderCol, direction, lastID, lastData) => {
   let orderQuery = '';
   let benchmark = '';
   switch (orderCol) {
@@ -63,39 +63,35 @@ const posts = (whereQuery, orderCol, direction, lastID, lastData) => {
       break;
   }
   return (
-    `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) AS num_comments FROM posts INNER JOIN users ON posts.author_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE ${lastID === '' ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery}) ORDER BY ${orderQuery}, posts.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
+    `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = posts.id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = posts.id) AS num_comments FROM posts INNER JOIN users ON posts.author_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE ${lastID === '' ? '' : benchmark} (${filterQuery === '' ? 'true' : filterQuery}) ORDER BY ${orderQuery}, posts.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
   );
 };
 
 // NOTE: Same format as routes/users.js - get user except adding num_friends
 // QUESTION: Maybe add alphabetical as an ordering? Probably not necessary
-const users = (userID, whereQuery, orderCol, direction, lastID, lastData) => {
+const users = (userID, filterQuery, orderCol, direction, lastID, lastData) => {
   let orderQuery = '';
   let benchmark = '';
   switch (orderCol) {
-    case 'date_joined': // Order by both directions
+    case 'date_joined':
       orderQuery = `date_joined ${direction}`;
-      if (direction === 'DESC') {
-        benchmark = `(date_joined, id) < (${lastData}, '${lastID}') AND`;
-      } else {
-        benchmark = `(date_joined, id) > (${lastData}, '${lastID}') AND`;
-      }
+      benchmark = `(date_joined, id) < (${lastData}, '${lastID}') AND`;
       break;
     case 'num_friends':
       orderQuery = `(SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) ${direction}`;
-      benchmark = `((SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id), users.id) < (${lastData}, '${lastID}') AND`
+      benchmark = `((SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id), users.id) < (${lastData}, '${lastID}') AND`;
       break;
     default:
       break;
   }
   return (
-    `SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) AS num_friends, (SELECT get_user_relation('${userID}', users.id)) AS type FROM users WHERE id != '${userID}' AND id != '' AND ${lastID === '' ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery}) ORDER BY ${orderQuery}, users.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
+    `SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT COUNT(*) FROM friends WHERE user1_id = users.id OR user2_id = users.id) AS num_friends, (SELECT get_user_relation('${userID}', users.id)) AS type FROM users WHERE id != '${userID}' AND id != '' AND ${lastID === '' ? '' : benchmark} (${filterQuery === '' ? 'true' : filterQuery}) ORDER BY ${orderQuery}, users.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
   );
 };
 
 // NOTE: Similar format as routes/topics.js - get subscribed topics
 // QUESTION: Maybe add alphabetical as an ordering? Probably not necessary
-const topics = (userID, whereQuery, orderCol, direction, lastID, lastData) => {
+const topics = (userID, filterQuery, orderCol, direction, lastID, lastData) => {
   let orderQuery = '';
   let benchmark = '';
   switch (orderCol) {
@@ -115,7 +111,7 @@ const topics = (userID, whereQuery, orderCol, direction, lastID, lastData) => {
       break;
   }
   return (
-    `SELECT id, name, lowercase_name, topic_pic, description, date_created, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers, (SELECT get_topic_relation('${userID}', topics.id)) AS type FROM topics WHERE ${lastID === '' ? '' : benchmark} (${whereQuery === '' ? 'true' : whereQuery}) ORDER BY ${orderQuery}, topics.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
+    `SELECT id, name, lowercase_name, topic_pic, description, date_created, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers, (SELECT get_topic_relation('${userID}', topics.id)) AS type FROM topics WHERE ${lastID === '' ? '' : benchmark} (${filterQuery === '' ? 'true' : filterQuery}) ORDER BY ${orderQuery}, topics.id ${direction} FETCH FIRST ${limit} ROWS ONLY`
   );
 };
 

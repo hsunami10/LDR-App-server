@@ -22,16 +22,16 @@ module.exports = (app, pool) => {
         [requests, pending, friends] = await Promise.all([
           getUserRequests(client, req.params.id),
           getPendingRequests(client, req.params.id),
-          getUserFriends(client, req.params.id, 'date_friended', 'DESC', last_id, last_data)
+          getUserFriends(client, req.params.id, '', 'date_friended', 'DESC', last_id, last_data)
         ]);
         const all_users = {
           ...requests.data,
           ...pending.data,
-          ...friends.data
+          ...friends.friends
         }
         delete requests['data'];
         delete pending['data'];
-        delete friends['data'];
+        delete friends['friends'];
         res.status(200).send({
           success: true,
           social: {

@@ -3,6 +3,7 @@ const pageFriendsQuery = require('./paginate').friends;
 const pagePostsQuery = require('./paginate').posts;
 const pageUsersQuery = require('./paginate').users;
 const pageTopicsQuery = require('./paginate').topics;
+const pageInteractionsQuery = require('./paginate').interactions;
 const rowsToOrderAndObj = require('./helpers').rowsToOrderAndObj;
 
 const userExists = async (client, id) => {
@@ -87,13 +88,25 @@ const getPendingRequests = async (client, user_id) => {
   }
 };
 
-const getUserFriends = async (client, userID, order, direction, lastID, lastData) => {
-  const friendsQuery = pageFriendsQuery(userID, order, direction, lastID, lastData);
+const getUserInteractions = async (client, userID, filterQuery, lastID, lastDate) => {
+  const interactionsQuery = pageInteractionsQuery(userID, filterQuery, lastID, lastDate);
+  const interactions = await client.query(interactionsQuery);
+  const obj = rowsToOrderAndObj(interactions.rows, 'id');
+  return {
+    order: obj.order,
+    interactions: obj.data,
+    replace: lastID === '',
+    keepPaging: obj.order.length !== 0
+  };
+}
+
+const getUserFriends = async (client, userID, filterQuery, order, direction, lastID, lastData) => {
+  const friendsQuery = pageFriendsQuery(userID, filterQuery, order, direction, lastID, lastData);
   const friends = await client.query(friendsQuery);
   const obj = rowsToOrderAndObj(friends.rows, 'id');
   return {
     order: obj.order,
-    data: obj.data,
+    friends: obj.data,
     replace: lastID === '',
     keepPaging: obj.order.length !== 0
   };
@@ -180,13 +193,13 @@ const getTopicsData = async (client, userID, filterQuery, order, direction, last
 
 module.exports = {
   getComments,
+  getUserInteractions,
   getUserRequests,
   getPendingRequests,
   getUserFriends,
   userExists,
   removeFriendRequestQuery,
   getBlockedUserIDs,
-
   getPostsData,
   getUsersData,
   getTopicsData,
