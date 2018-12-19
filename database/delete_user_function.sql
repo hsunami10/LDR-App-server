@@ -6,6 +6,7 @@ BEGIN
   DELETE FROM interactions WHERE user_id = u_id;
   DELETE FROM comment_likes WHERE user_id = u_id;
   DELETE FROM post_likes WHERE user_id = u_id;
+  DELETE FROM user_searches WHERE user_id = u_id;
   DELETE FROM reports WHERE user_id = u_id OR target_id = u_id;
   DELETE FROM blocked WHERE user1_id = u_id OR user2_id = u_id;
   DELETE FROM friend_requests WHERE sender_id = u_id OR receiver_id = u_id;

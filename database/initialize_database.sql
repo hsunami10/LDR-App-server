@@ -101,10 +101,22 @@ CREATE TABLE comments (
   body text NOT NULL DEFAULT ''
 );
 
-CREATE TABLE discover_searches (
+-- Before inserting new row, check to see if lowercase_search_term matches w/ user_id
+-- If matches, then update search_term and date_searched ONLY
+-- If no match, then insert new row
+-- UPSERT
+CREATE TABLE user_searches (
+  id text PRIMARY KEY,
+  user_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  search_term text NOT NULL,
+  lowercase_search_term text NOT NULL,
+  date_searched bigint NOT NULL
+);
+
+CREATE TABLE all_searches (
   id text PRIMARY KEY,
   search_term text NOT NULL UNIQUE,
-  lowercase_search_term text NOT NULL UNIQUE, -- Use this to ignore case sensitivity
+  lowercase_search_term text NOT NULL, -- Use this to ignore case sensitivity
   num_searches bigint NOT NULL DEFAULT 0
 );
 
@@ -130,10 +142,11 @@ CREATE TABLE interactions (
   date_updated bigint NOT NULL
 );
 
--- Need this for INSERT ON CONFLICT UPDATE
+-- Need this for INSERT ON CONFLICT UPDATE (upserts)
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
 ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
 ALTER TABLE friend_requests ADD CONSTRAINT friend_requests_sender_receiver_id_constraint UNIQUE (sender_id, receiver_id);
+ALTER TABLE all_searches ADD CONSTRAINT all_searches_search_term_lowercase_constraint UNIQUE(search_term, lowercase_search_term);
 
 -- Insert dummy user
 INSERT INTO users VALUES (

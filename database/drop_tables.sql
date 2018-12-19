@@ -1,15 +1,15 @@
 DROP TABLE interactions;
 DROP TABLE comment_likes;
 DROP TABLE post_likes;
-DROP TABLE discover_searches;
+DROP TABLE all_searches;
+DROP TABLE user_searches;
 DROP TABLE comments;
 DROP TABLE posts;
 DROP TABLE reports;
 DROP TABLE blocked;
 DROP TABLE friend_requests;
 DROP TABLE friends;
--- DROP TABLE partner_requests;
--- DROP TABLE partners;
+DROP TABLE partners;
 DROP TABLE topic_subscribers;
 DROP TABLE topics;
 DROP TABLE users;

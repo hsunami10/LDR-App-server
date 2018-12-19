@@ -17,7 +17,7 @@ module.exports = (app, pool) => {
       const { id } = req.params;
       // order - newest (default) - date_joined, popular - num_likes, nearest - coordinates
       // direction - newest (default) - DESC, popular - DESC, nearest - ASC (or something else)
-      const { offset, order, direction, last_id, last_data } = req.query;
+      const { order, direction, last_id, last_data } = req.query;
 
       // Query filters - which ids to exclude / include
       // Union all - need to have the same number of columns
