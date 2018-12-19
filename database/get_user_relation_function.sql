@@ -1,9 +1,13 @@
--- Returns 4 user relations - request, friend, regular, pending - for user interactions
+-- Returns 4 user relations - self, request, friend, regular, pending - for user interactions
 CREATE OR REPLACE FUNCTION get_user_relation(user_id text, other_id text)
 RETURNS TEXT AS $BODY$
 DECLARE
   doesExist boolean;
 BEGIN
+  IF user_id = other_id THEN
+    RETURN 'self';
+  END IF;
+
   -- Check if friend
   SELECT EXISTS (SELECT 1 FROM friends WHERE (friends.user1_id = user_id AND friends.user2_id = other_id) OR (friends.user1_id = other_id AND friends.user2_id = user_id) LIMIT 1) INTO doesExist;
   IF doesExist THEN

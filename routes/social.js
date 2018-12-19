@@ -47,12 +47,6 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/social/get-friends/:id', wrapper(async (req, res, next) => {
-    const { order, direction, last_id, last_data } = req.query;
-    const friends = await getUserFriends(pool, req.params.id, order, direction, last_id, last_data);
-    res.status(200).send(friends);
-  }))
-
   app.post('/api/social/send-friend-request/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {

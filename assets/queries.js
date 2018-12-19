@@ -88,8 +88,8 @@ const getPendingRequests = async (client, user_id) => {
   }
 };
 
-const getUserInteractions = async (client, userID, filterQuery, lastID, lastDate) => {
-  const interactionsQuery = pageInteractionsQuery(userID, filterQuery, lastID, lastDate);
+const getUserInteractions = async (client, userID, filterQuery, lastID, lastData) => {
+  const interactionsQuery = pageInteractionsQuery(userID, filterQuery, lastID, lastData);
   const interactions = await client.query(interactionsQuery);
   const obj = rowsToOrderAndObj(interactions.rows, 'id');
   return {

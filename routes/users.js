@@ -16,55 +16,81 @@ const userExists = require('../assets/queries').userExists;
 const getUserInteractions = require('../assets/queries').getUserInteractions;
 
 module.exports = (app, pool) => {
-  // QUESTION: How to handle refreshing? Which tab to grab data for?
   app.route('/api/user/:id')
     // NOTE: Similar to assets.paginate.js - users, except no num_friends
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
-        const { type, user_id } = req.query;
+        const { user_id, current_tab, order, direction, last_id, last_data } = req.query;
         const targetID = req.params.id;
         let user, blocked;
         [user, blocked] = await Promise.all([
           client.query(`SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT get_user_relation('${user_id}', users.id)) AS type FROM users WHERE id = '${targetID}' AND deleted = false`),
           getBlockedUserIDs(client, user_id)
         ]);
-        if (!user) {
+        if (user.rows.length === 0) {
           res.status(200).send({ success: false, error: NO_USER_MSG });
         } else {
-          let partnerData, postsData;
-          let filterQuery = blocked.map(id => {
+          let partner, posts, interactions, friends;
+          // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
+          // If there's no row, it returns an object with all values = null
+          const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
+          let filterPostsQuery = blocked.map(id => {
             return `posts.author_id != '${id}'`;
           }).join(' AND ');
-          filterQuery = `posts.author_id = '${targetID}' AND (${filterQuery === '' ? 'true' : filterQuery})`;
+          const filterInteractionsQuery = filterPostsQuery;
+          filterPostsQuery = `posts.author_id = '${targetID}' AND (${filterPostsQuery === '' ? 'true' : filterPostsQuery})`;
+          const filterUsersQuery = blocked.map(id => {
+            return `users.id != '${id}'`;
+          }).join(' AND ');
 
-          if (type === 'private' || type === 'public') {
-            // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
-            // If there's no row, it returns an object with all values = null
-            const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
-
-            // Get friends and subscribers when the tabs (in view profile screen) are visited
-            [partnerData, postsData] = await Promise.all([
-              client.query(partnersQuery),
-              getPostsData(client, user_id, filterQuery, 'date_posted', 'DESC', '', '')
-            ]);
-          } else {
-            throw new Error('get: /api/user, type has to be either "private", "public"');
+          // Handle loading data from 3 different tabs
+          switch (current_tab) {
+            case 'posts':
+              [partner, posts] = await Promise.all([
+                client.query(partnersQuery),
+                getPostsData(client, user_id, filterPostsQuery, order, direction, last_id, last_data)
+              ]);
+              res.status(200).send({
+                success: true,
+                user: {
+                  ...user.rows[0],
+                  posts,
+                  partner: partner.rows[0].id ? partner.rows[0] : null
+                }
+              });
+              break;
+            case 'interactions':
+              [partner, interactions] = await Promise.all([
+                client.query(partnersQuery),
+                getUserInteractions(client, targetID, filterInteractionsQuery, last_id, last_data)
+              ]);
+              res.status(200).send({
+                success: true,
+                user: {
+                  ...user.rows[0],
+                  interactions,
+                  partner: partner.rows[0].id ? partner.rows[0] : null
+                }
+              });
+              break;
+            case 'friends':
+              [partner, friends] = await Promise.all([
+                client.query(partnersQuery),
+                getUserFriends(client, targetID, filterUsersQuery, order, direction, last_id, last_data)
+              ]);
+              res.status(200).send({
+                success: true,
+                user: {
+                  ...user.rows[0],
+                  friends,
+                  partner: partner.rows[0].id ? partner.rows[0] : null
+                }
+              });
+              break;
+            default:
+              break;
           }
-
-          res.status(200).send({
-            success: true,
-            user: {
-              ...user.rows[0],
-              posts: {
-                ...postsData,
-                data: postsData.data
-              },
-              initial_loading: false,
-              refreshing: false,
-              partner: partnerData.rows.length === 0 ? null : partnerData.rows[0]
-            }
-          });
         }
       } finally {
         client.release();
@@ -100,7 +126,7 @@ module.exports = (app, pool) => {
         filterQuery = `posts.author_id = '${targetID}' AND (${filterQuery === '' ? 'true' : filterQuery})`;
 
         const posts = await getPostsData(client, user_id, filterQuery, order, direction, last_id, last_data);
-        res.status(200).send(posts);
+        res.status(200).send({ success: true, posts });
       }
     } finally {
       client.release();
@@ -125,7 +151,7 @@ module.exports = (app, pool) => {
         }).join(' AND ');
 
         const interactions = await getUserInteractions(client, targetID, filterQuery, last_id, last_date);
-        res.status(200).send(interactions);
+        res.status(200).send({ success: true, interactions });
       }
     } finally {
       client.release();
@@ -150,7 +176,7 @@ module.exports = (app, pool) => {
         }).join(' AND ');
 
         const friends = await getUserFriends(client, targetID, filterQuery, order, direction, last_id, last_data);
-        res.status(200).send(friends);
+        res.status(200).send({ success: true, friends });
       }
     } finally {
       client.release();

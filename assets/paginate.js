@@ -4,13 +4,13 @@
 const limit = 20;
 
 // Only allow one ordering - date
-const comments = (postID, lastID, lastDate, commentsLimit = 5) => (
-  `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes FROM comments INNER JOIN users ON comments.author_id = users.id WHERE ${lastID === '' ? '' : `(comments.date_sent, comments.id) < (${lastDate}, '${lastID}') AND`} comments.post_id = '${postID}' ORDER BY comments.date_sent DESC, comments.id DESC FETCH FIRST ${commentsLimit} ROWS ONLY`
+const comments = (postID, lastID, lastData, commentsLimit = 5) => (
+  `SELECT comments.id, comments.post_id, comments.author_id, users.username, users.profile_pic, comments.date_sent, comments.body, (SELECT COUNT(*) FROM comment_likes WHERE comment_likes.comment_id = comments.id) AS num_likes FROM comments INNER JOIN users ON comments.author_id = users.id WHERE ${lastID === '' ? '' : `(comments.date_sent, comments.id) < (${lastData}, '${lastID}') AND`} comments.post_id = '${postID}' ORDER BY comments.date_sent DESC, comments.id DESC FETCH FIRST ${commentsLimit} ROWS ONLY`
 );
 
 // Only allow one ordering - date
-const interactions = (userID, filterQuery, lastID, lastDate) => (
-  `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE (interactions.user_id = '${userID}') AND (${filterQuery === '' ? 'true' : filterQuery}) ${lastID === '' ? '' : `AND (interactions.date_updated, posts.id) < (${lastDate}, '${lastID}')`} ORDER BY interactions.date_updated DESC, posts.id DESC FETCH FIRST ${limit} ROWS ONLY`
+const interactions = (userID, filterQuery, lastID, lastData) => (
+  `SELECT posts.id, posts.topic_id, topics.name, posts.author_id, users.username, users.profile_pic, posts.date_posted, posts.body, posts.coordinates, (SELECT COUNT(*) FROM post_likes WHERE post_likes.post_id = interactions.post_id) AS num_likes, (SELECT COUNT(*) FROM comments WHERE comments.post_id = interactions.post_id) as num_comments FROM interactions INNER JOIN posts ON interactions.post_id = posts.id INNER JOIN users ON interactions.user_id = users.id INNER JOIN topics ON posts.topic_id = topics.id WHERE (interactions.user_id = '${userID}') AND (${filterQuery === '' ? 'true' : filterQuery}) ${lastID === '' ? '' : `AND (interactions.date_updated, posts.id) < (${lastData}, '${lastID}')`} ORDER BY interactions.date_updated DESC, posts.id DESC FETCH FIRST ${limit} ROWS ONLY`
 );
 
 const friends = (userID, filterQuery, orderCol, direction, lastID, lastData) => {
