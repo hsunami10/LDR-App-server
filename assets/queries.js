@@ -153,7 +153,7 @@ const getPostsData = async (client, userID, filterQuery, order, direction, lastI
       post_likes: {},
       posts: {},
       order: [],
-      replace: false,
+      replace: lastID === '',
       keepPaging: false,
     };
   }

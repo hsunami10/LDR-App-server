@@ -146,7 +146,8 @@ CREATE TABLE interactions (
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
 ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
 ALTER TABLE friend_requests ADD CONSTRAINT friend_requests_sender_receiver_id_constraint UNIQUE (sender_id, receiver_id);
-ALTER TABLE all_searches ADD CONSTRAINT all_searches_search_term_lowercase_constraint UNIQUE(search_term, lowercase_search_term);
+ALTER TABLE all_searches ADD CONSTRAINT all_searches_search_term_lowercase_constraint UNIQUE (search_term, lowercase_search_term);
+ALTER TABLE user_searches ADD CONSTRAINT user_searches_user_id_lowercase_search_term UNIQUE (user_id, lowercase_search_term);
 
 -- Insert dummy user
 INSERT INTO users VALUES (
