@@ -1,4 +1,4 @@
--- 12 tables
+-- TODO: Change all id PRIMARY KEY columns to type UUID instead of TEXT
 
 -- Dummy user
 CREATE TABLE users (
