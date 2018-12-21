@@ -35,11 +35,6 @@ const ListOrders = Object.freeze({
       order: 'num_friends',
       direction: 'DESC'
     },
-    alpha: {
-      text: 'Alphabetical',
-      order: 'lowercase_username',
-      direction: 'ASC'
-    }
   },
   topics: {
     default: { // Default = popular
