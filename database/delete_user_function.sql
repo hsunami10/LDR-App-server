@@ -3,6 +3,7 @@ RETURNS VOID AS $BODY$
 DECLARE
 BEGIN
   UPDATE users SET deleted = true WHERE id = u_id;
+  DELETE FROM notifications WHERE receiver_id = u_id;
   DELETE FROM interactions WHERE user_id = u_id;
   DELETE FROM comment_likes WHERE user_id = u_id;
   DELETE FROM post_likes WHERE user_id = u_id;

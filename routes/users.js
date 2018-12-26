@@ -7,6 +7,7 @@ const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
+const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const getUserRequests = require('../assets/queries').getUserRequests;
 const getPendingRequests = require('../assets/queries').getPendingRequests;
 const getUserFriends = require('../assets/queries').getUserFriends;
@@ -28,21 +29,17 @@ module.exports = (app, pool) => {
           client.query(`SELECT id, username, profile_pic, bio, date_joined, active, user_type, (SELECT get_user_relation('${user_id}', users.id)) AS type FROM users WHERE id = '${targetID}' AND deleted = false`),
           getBlockedUserIDs(client, user_id)
         ]);
-        if (user.rows.length === 0) {
+        if (user.rows.length === 0 || blocked.includes(targetID)) {
           res.status(200).send({ success: false, error: NO_USER_MSG });
         } else {
           let partner, posts, interactions, friends;
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
           // If there's no row, it returns an object with all values = null
           const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
-          let filterPostsQuery = blocked.map(id => {
-            return `posts.author_id != '${id}'`;
-          }).join(' AND ');
+          let filterPostsQuery = filterBlockedQuery('posts', blocked);
           const filterInteractionsQuery = filterPostsQuery;
           filterPostsQuery = `posts.author_id = '${targetID}' AND (${filterPostsQuery === '' ? 'true' : filterPostsQuery})`;
-          const filterUsersQuery = blocked.map(id => {
-            return `users.id != '${id}'`;
-          }).join(' AND ');
+          const filterUsersQuery = filterBlockedQuery('users', blocked);
 
           // Handle loading data from 3 different tabs
           switch (current_tab) {
@@ -120,9 +117,7 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        let filterQuery = blocked.map(id => {
-          return `posts.author_id != '${id}'`;
-        }).join(' AND ');
+        let filterQuery = filterBlockedQuery('posts', blocked);
         filterQuery = `posts.author_id = '${targetID}' AND (${filterQuery === '' ? 'true' : filterQuery})`;
 
         const posts = await getPostsData(client, user_id, filterQuery, order, direction, last_id, last_data);
@@ -146,9 +141,7 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        const filterQuery = blocked.map(id => {
-          return `posts.author_id != '${id}'`;
-        }).join(' AND ');
+        const filterQuery = filterBlockedQuery('posts', blocked);
 
         const interactions = await getUserInteractions(client, targetID, filterQuery, last_id, last_date);
         res.status(200).send({ success: true, interactions });
@@ -171,9 +164,7 @@ module.exports = (app, pool) => {
       if (!user) {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
-        const filterQuery = blocked.map(id => {
-          return `users.id != '${id}'`;
-        }).join(' AND ');
+        const filterQuery = filterBlockedQuery('users', blocked);
 
         const friends = await getUserFriends(client, targetID, filterQuery, order, direction, last_id, last_data);
         res.status(200).send({ success: true, friends });

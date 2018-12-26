@@ -3,6 +3,8 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const getComments = require('../assets/queries').getComments;
+const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
+const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 module.exports = (app, pool) => {
@@ -14,14 +16,19 @@ module.exports = (app, pool) => {
       try {
         const { post_id, last_id, last_date } = req.query;
         const user_id = req.params.id;
-        const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
-        if (res2.rows.length === 0) {
+        let post, blocked;
+        [post, blocked] = await Promise.all([
+          client.query(`SELECT id FROM posts WHERE id = '${post_id}'`),
+          getBlockedUserIDs(client, user_id)
+        ]);
+        if (post.rows.length === 0) {
           res.status(200).send({ success: false, error: NO_POST_MSG });
         } else {
+          const filterQuery = filterBlockedQuery('comments', blocked);
           const result = await getComments(
             client,
             user_id,
-            pageCommentsQuery(post_id, last_id, last_date)
+            pageCommentsQuery(filterQuery, post_id, last_id, last_date)
           );
           res.status(200).send({ success: true, comments: result });
         }

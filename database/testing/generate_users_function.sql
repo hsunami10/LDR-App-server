@@ -1,5 +1,5 @@
-CREATE OR REPLACE FUNCTION create_users(count bigint)
-RETURNS VOID AS $BODY$
+CREATE OR REPLACE FUNCTION generate_users(count bigint)
+RETURNS VOID AS $$
 DECLARE
   iterator bigint := 0;
   u_name text;
@@ -22,4 +22,4 @@ BEGIN
     iterator := iterator + 1;
   END LOOP;
 END;
-$BODY$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql;

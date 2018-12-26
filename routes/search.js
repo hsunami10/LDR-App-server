@@ -7,20 +7,17 @@ const getPostsData = require('../assets/queries').getPostsData;
 const getUsersData = require('../assets/queries').getUsersData;
 const getTopicsData = require('../assets/queries').getTopicsData;
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
+const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
-const ListOrders = require('../assets/constants').ListOrders;
+const SortListTypes = require('../assets/constants').SortListTypes;
 
 const filterUsers = (blocked, term) => {
-  const filter = blocked.map(id => {
-    return `users.id != '${id}'`;
-  }).join(' AND ');
+  const filter = filterBlockedQuery('users', blocked);
   return `(users.lowercase_username LIKE '%${term.toLowerCase()}%') AND (${filter === '' ? 'true' : filter})`;
 };
 
 const filterPosts = (blocked, term) => {
-  const filter = blocked.map(id => {
-    return `posts.author_id != '${id}'`;
-  }).join(' AND ');
+  const filter = filterBlockedQuery('posts', blocked);
   return `(posts.body LIKE '%${term}%' OR posts.body LIKE '%${term.toLowerCase()}%') AND (${filter === '' ? 'true' : filter})`;
 };
 
@@ -49,9 +46,9 @@ module.exports = (app, pool) => {
         const colsAll = [uuidv4(), term, term.toLowerCase(), 1];
         const colsUser = [uuidv4(), id, term, term.toLowerCase(), moment().unix()];
         [users, posts, topics] = await Promise.all([
-          getUsersData(client, id, filterUsersQuery, ListOrders.users.default.order, ListOrders.users.default.direction, '', ''),
-          getPostsData(client, id, filterPostsQuery, ListOrders.posts.default.order, ListOrders.posts.default.direction, '', ''),
-          getTopicsData(client, id, filterTopicsQuery, ListOrders.topics.default.order, ListOrders.topics.default.direction, '', ''),
+          getUsersData(client, id, filterUsersQuery, SortListTypes.users.default.order, SortListTypes.users.default.direction, '', ''),
+          getPostsData(client, id, filterPostsQuery, SortListTypes.posts.default.order, SortListTypes.posts.default.direction, '', ''),
+          getTopicsData(client, id, filterTopicsQuery, SortListTypes.topics.default.order, SortListTypes.topics.default.direction, '', ''),
           client.query(`INSERT INTO all_searches (id, search_term, lowercase_search_term, num_searches) VALUES ($1, $2, $3, $4) ON CONFLICT (search_term, lowercase_search_term) DO UPDATE SET num_searches = all_searches.num_searches + 1 WHERE all_searches.search_term = '${term}' AND all_searches.lowercase_search_term = '${term.toLowerCase()}'`, colsAll),
           client.query(`INSERT INTO user_searches (id, user_id, search_term, lowercase_search_term, date_searched) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (user_id, lowercase_search_term) DO UPDATE SET search_term = '${term}', date_searched = ${colsUser[4]} WHERE user_searches.user_id = '${id}' AND user_searches.lowercase_search_term = '${term.toLowerCase()}'`, colsUser)
         ]);

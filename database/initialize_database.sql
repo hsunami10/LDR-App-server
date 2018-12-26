@@ -142,6 +142,16 @@ CREATE TABLE interactions (
   date_updated bigint NOT NULL
 );
 
+CREATE TABLE notifications (
+  id text PRIMARY KEY,
+  sender_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE NO ACTION,
+  post_id text REFERENCES posts (id) ON UPDATE CASCADE ON DELETE NO ACTION,
+  receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
+  body text NOT NULL DEFAULT '',
+  type text NOT NULL,
+  viewed boolean DEFAULT false
+);
+
 -- Need this for INSERT ON CONFLICT UPDATE (upserts)
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
 ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
@@ -165,4 +175,24 @@ INSERT INTO users VALUES (
   NULL,
   NULL,
   'standard'
+);
+
+INSERT INTO posts VALUES (
+  '',
+  '',
+  '',
+  0,
+  '',
+  null,
+  '',
+  false
+);
+
+INSERT INTO topics VALUES (
+  '',
+  '',
+  '',
+  '',
+  '',
+  0
 );

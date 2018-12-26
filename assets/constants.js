@@ -1,7 +1,7 @@
 // NOTE: "default" has to match one of the other keys
 // NOTE: Has to match constants file in client
 // posts, users, topics - have to match "type" for DataList
-const ListOrders = Object.freeze({
+const SortListTypes = Object.freeze({
   posts: {
     default: { // Default = new
       text: 'Newest',
@@ -64,5 +64,5 @@ module.exports = {
 
   THIRTY_MIN: 1800,
 
-  ListOrders
+  SortListTypes
 };

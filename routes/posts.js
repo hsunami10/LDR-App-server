@@ -3,6 +3,8 @@ const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const getComments = require('../assets/queries').getComments;
+const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
+const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
 
 // get post put delete single posts
@@ -13,8 +15,12 @@ module.exports = (app, pool) => {
       try {
         const { length, post_id } = req.query;
         const user_id = req.params.id;
-        const res2 = await client.query(`SELECT id FROM posts WHERE id = '${post_id}'`);
-        if (res2.rows.length === 0) {
+        let post, blocked;
+        [post, blocked] = await Promise.all([
+          client.query(`SELECT id FROM posts WHERE id = '${post_id}'`),
+          getBlockedUserIDs(client, user_id)
+        ]);
+        if (post.rows.length === 0) {
           res.status(200).send({ success: false, error: NO_POST_MSG });
         } else {
           // Get post
@@ -24,12 +30,13 @@ module.exports = (app, pool) => {
 
           // Get comments
           let commentsQuery = '';
+          const filterQuery = filterBlockedQuery('comments', blocked);
           if (parseInt(length, 10) === 0) {
             // If there were no comments when refreshing, then grab the latest with default limit
-            commentsQuery = pageCommentsQuery(post_id, '', '');
+            commentsQuery = pageCommentsQuery(filterQuery, post_id, '', '');
           } else {
             // If there were comments when refreshing, then grab the latest "length" as the limit
-            commentsQuery = pageCommentsQuery(post_id, '', '', parseInt(length, 10));
+            commentsQuery = pageCommentsQuery(filterQuery, post_id, '', '', parseInt(length, 10));
           }
           const comments = await getComments(client, user_id, commentsQuery);
 

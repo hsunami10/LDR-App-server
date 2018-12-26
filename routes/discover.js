@@ -4,6 +4,7 @@ const wrapper = require('../assets/wrapper');
 const userExists = require('../assets/queries').userExists;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
+const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const getPostsData = require('../assets/queries').getPostsData;
 const getUsersData = require('../assets/queries').getUsersData;
 const getTopicsData = require('../assets/queries').getTopicsData;
@@ -23,9 +24,7 @@ module.exports = (app, pool) => {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const { order, direction, last_id, last_data } = req.query;
-        const filterQuery = blocked.map(id => {
-          return `posts.author_id != '${id}'`;
-        }).join(' AND ');
+        const filterQuery = filterBlockedQuery('posts', blocked);
 
         const result = await getPostsData(client, id, filterQuery, order, direction, last_id, last_data);
         res.status(200).send({ success: true, result });
@@ -48,9 +47,7 @@ module.exports = (app, pool) => {
         res.status(200).send({ success: false, error: NO_USER_MSG });
       } else {
         const { order, direction, last_id, last_data } = req.query;
-        const filterQuery = blocked.map(id => {
-          return `users.id != '${id}'`;
-        }).join(' AND ');
+        const filterQuery = filterBlockedQuery('users', blocked);
 
         const result = await getUsersData(client, id, filterQuery, order, direction, last_id, last_data);
         res.status(200).send({ success: true, result });
