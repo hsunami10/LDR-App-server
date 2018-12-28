@@ -7,7 +7,7 @@ const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
-const hashPlainText = require('../assets/authentication');
+const hashPlainText = require('../assets/authentication').hashPlainText;
 
 module.exports = (app, pool, passport) => {
   // ======================================= Forgot Password =======================================
@@ -43,7 +43,7 @@ module.exports = (app, pool, passport) => {
   }));
 
   // ====================================== Logging In / Out ======================================
-  // Info needed upon login: id only
+  // Only on logging in screen
   app.post('/api/login', passport.authenticate('local'), wrapper(async (req, res, next) => {
     res.status(200).send({ id: req.user.id });
   }));
@@ -63,9 +63,13 @@ module.exports = (app, pool, passport) => {
     try {
       const { username, password } = req.body;
       const id = uuidv4();
-      const res2 = await client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}' AND deleted = false`); // Ignore case sensitivity
+      let res2, hashPassword;
+      [res2, hashPassword] = await Promise.all([
+        client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}' AND deleted = false`),
+        hashPlainText(password)
+      ]);
       if (res2.rows.length === 0) {
-        const cols = [id, username, username.toLowerCase(), password, moment().unix()];
+        const cols = [id, username, username.toLowerCase(), hashPassword, moment().unix()];
         await client.query(`INSERT INTO users (id, username, lowercase_username, password, date_joined) VALUES ($1, $2, $3, $4, $5)`, cols);
         res.status(200).send({ id });
       } else {
@@ -74,5 +78,10 @@ module.exports = (app, pool, passport) => {
     } finally {
       client.release();
     }
-  }));
+  }))
+
+  // Only after sign up response
+  app.post('/api/start-session', passport.authenticate('local'), wrapper(async (req, res, next) => {
+    res.sendStatus(200);
+  }))
 };

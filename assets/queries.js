@@ -6,11 +6,6 @@ const pageTopicsQuery = require('./paginate').topics;
 const pageInteractionsQuery = require('./paginate').interactions;
 const rowsToOrderAndObj = require('./helpers').rowsToOrderAndObj;
 
-const userExists = async (client, id) => {
-  const user = await client.query(`SELECT id FROM users WHERE id = '${id}' AND deleted = false`);
-  return user.rows.length > 0;
-}
-
 const getComments = async (client, user_id, queryString) => {
   const comments = await client.query(queryString);
   const length = comments.rows.length;
@@ -197,7 +192,6 @@ module.exports = {
   getUserRequests,
   getPendingRequests,
   getUserFriends,
-  userExists,
   removeFriendRequestQuery,
   getBlockedUserIDs,
   getPostsData,

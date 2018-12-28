@@ -6,10 +6,11 @@ const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
 
 // get post put delete single posts
 module.exports = (app, pool) => {
-  app.route('/api/posts/:id')
+  app.route('/api/posts/:id', ensureAuthenticated)
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {

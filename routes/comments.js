@@ -6,9 +6,10 @@ const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
 
 module.exports = (app, pool) => {
-  app.route('/api/comments/:id')
+  app.route('/api/comments/:id', ensureAuthenticated)
     // Similar to fetching feed
     // Only call when paging
     .get(wrapper(async (req, res, next) => {

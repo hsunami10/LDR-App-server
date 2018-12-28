@@ -2,9 +2,9 @@ const uuidv4 = require('uuid/v4');
 const moment = require('moment');
 const wrapper = require('../assets/wrapper');
 const upload = require('../config/multer');
-const userExists = require('../assets/queries').userExists;
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
 
 module.exports = (app, pool) => {
   app.route('/api/topics/:id')
@@ -26,25 +26,20 @@ module.exports = (app, pool) => {
     }))
 
   // NOTE: Similar format to assets/paginate - topics
-  app.get('/api/topics/subscribed/:id', wrapper(async (req, res, next) => {
+  app.get('/api/topics/subscribed/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
-      const user = await userExists(client, id);
-      if (!user) {
-        res.status(200).send({ success: false, error: NO_USER_MSG });
-      } else {
-        const { order, direction } = req.query;
-        const topics = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, 'already_subscribed' AS type, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${id}' ORDER BY ${order} ${direction}`);
-        const result = rowsToOrderAndObj(topics.rows, 'id');
-        res.status(200).send({ success: true, result });
-      }
+      const { order, direction } = req.query;
+      const topics = await pool.query(`SELECT topics.id, topics.name, topics.lowercase_name, topics.topic_pic, 'already_subscribed' AS type, (SELECT COUNT(*) FROM topic_subscribers WHERE topics.id = topic_subscribers.topic_id) AS num_subscribers FROM topics INNER JOIN topic_subscribers ON topics.id = topic_subscribers.topic_id WHERE topic_subscribers.subscriber_id = '${id}' ORDER BY ${order} ${direction}`);
+      const result = rowsToOrderAndObj(topics.rows, 'id');
+      res.status(200).send({ success: true, result });
     } finally {
       client.release();
     }
   }));
 
-  app.post('/api/topics/create/:id', upload.single('clientImage'), wrapper(async (req, res, next) => {
+  app.post('/api/topics/create/:id', ensureAuthenticated, upload.single('clientImage'), wrapper(async (req, res, next) => {
     const client = await pool.connect();
     const date = moment().unix();
     const { name, description, topic_id } = req.body;
@@ -84,7 +79,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.post('/api/topics/subscribe/:id', wrapper(async (req, res, next) => {
+  app.post('/api/topics/subscribe/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { topic_id } = req.body;
     const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];
@@ -92,7 +87,7 @@ module.exports = (app, pool) => {
     res.sendStatus(200);
   }))
 
-  app.delete('/api/topics/unsubscribe/:id', wrapper(async (req, res, next) => {
+  app.delete('/api/topics/unsubscribe/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { topic_id } = req.body;
     const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];

@@ -13,11 +13,11 @@ const getPendingRequests = require('../assets/queries').getPendingRequests;
 const getUserFriends = require('../assets/queries').getUserFriends;
 const getPostsData = require('../assets/queries').getPostsData;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
-const userExists = require('../assets/queries').userExists;
 const getUserInteractions = require('../assets/queries').getUserInteractions;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
 
 module.exports = (app, pool) => {
-  app.route('/api/user/:id')
+  app.route('/api/user/:id', ensureAuthenticated)
     // NOTE: Similar to assets.paginate.js - users, except no num_friends
     .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
@@ -109,20 +109,11 @@ module.exports = (app, pool) => {
     try {
       const targetID = req.params.id;
       const { user_id, order, direction, last_id, last_data } = req.query;
-      let user, blocked;
-      [user, blocked] = await Promise.all([
-        userExists(client, targetID),
-        getBlockedUserIDs(client, user_id)
-      ]);
-      if (!user) {
-        res.status(200).send({ success: false, error: NO_USER_MSG });
-      } else {
-        let filterQuery = filterBlockedQuery('posts', blocked);
-        filterQuery = `posts.author_id = '${targetID}' AND (${filterQuery === '' ? 'true' : filterQuery})`;
-
-        const posts = await getPostsData(client, user_id, filterQuery, order, direction, last_id, last_data);
-        res.status(200).send({ success: true, posts });
-      }
+      const blocked = await getBlockedUserIDs(client, user_id);
+      let filterQuery = filterBlockedQuery('posts', blocked);
+      filterQuery = `posts.author_id = '${targetID}' AND (${filterQuery === '' ? 'true' : filterQuery})`;
+      const posts = await getPostsData(client, user_id, filterQuery, order, direction, last_id, last_data);
+      res.status(200).send({ success: true, posts });
     } finally {
       client.release();
     }
@@ -133,19 +124,10 @@ module.exports = (app, pool) => {
     try {
       const targetID = req.params.id;
       const { user_id, last_id, last_date } = req.query;
-      let user, blocked;
-      [user, blocked] = await Promise.all([
-        userExists(client, targetID),
-        getBlockedUserIDs(client, user_id)
-      ]);
-      if (!user) {
-        res.status(200).send({ success: false, error: NO_USER_MSG });
-      } else {
-        const filterQuery = filterBlockedQuery('posts', blocked);
-
-        const interactions = await getUserInteractions(client, targetID, filterQuery, last_id, last_date);
-        res.status(200).send({ success: true, interactions });
-      }
+      const blocked = await getBlockedUserIDs(client, user_id);
+      const filterQuery = filterBlockedQuery('posts', blocked);
+      const interactions = await getUserInteractions(client, targetID, filterQuery, last_id, last_date);
+      res.status(200).send({ success: true, interactions });
     } finally {
       client.release();
     }
@@ -156,19 +138,10 @@ module.exports = (app, pool) => {
     try {
       const targetID = req.params.id;
       const { user_id, order, direction, last_id, last_data } = req.query;
-      let user, blocked;
-      [user, blocked] = await Promise.all([
-        userExists(client, targetID),
-        getBlockedUserIDs(client, user_id)
-      ]);
-      if (!user) {
-        res.status(200).send({ success: false, error: NO_USER_MSG });
-      } else {
-        const filterQuery = filterBlockedQuery('users', blocked);
-
-        const friends = await getUserFriends(client, targetID, filterQuery, order, direction, last_id, last_data);
-        res.status(200).send({ success: true, friends });
-      }
+      const blocked = await getBlockedUserIDs(client, user_id);
+      const filterQuery = filterBlockedQuery('users', blocked);
+      const friends = await getUserFriends(client, targetID, filterQuery, order, direction, last_id, last_data);
+      res.status(200).send({ success: true, friends });
     } finally {
       client.release();
     }
