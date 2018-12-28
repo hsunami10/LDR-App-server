@@ -6,8 +6,10 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const hashPlainText = require('../assets/authentication');
 
-module.exports = (app, pool) => {
+module.exports = (app, pool, passport) => {
   // ======================================= Forgot Password =======================================
   app.post('/api/login/forgot-password', wrapper(async (req, res, next) => {
     const { email } = req.body;
@@ -42,19 +44,21 @@ module.exports = (app, pool) => {
 
   // ====================================== Logging In / Out ======================================
   // Info needed upon login: id only
-  app.get('/api/login/:username/:password', wrapper(async (req, res, next) => {
-    const { username, password } = req.params;
-    // NOTE: Same query as get /api/user/:id private || public
-    const res2 = await pool.query(`SELECT id FROM users WHERE username = '${username}' AND password = '${password}' AND deleted = false`);
-    if (res2.rows.length === 0) {
-      res.status(200).send({ msg: 'Invalid username or password' }); // Cannot find user
-    } else {
-      res.status(200).send({ id: res2.rows[0].id });
-    }
+  app.post('/api/login', passport.authenticate('local'), wrapper(async (req, res, next) => {
+    res.status(200).send({ id: req.user.id });
+  }));
+  app.get('/api/logout', ensureAuthenticated, wrapper(async (req, res, next) => {
+    req.logout();
+    req.session.destroy((error) => {
+      if (error) {
+        throw error;
+      }
+      res.sendStatus(200);
+    });
   }));
 
   // ========================================== Signing Up ==========================================
-  app.post('/api/signup/username', wrapper(async (req, res, next) => {
+  app.post('/api/signup', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { username, password } = req.body;

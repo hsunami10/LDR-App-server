@@ -149,7 +149,8 @@ CREATE TABLE notifications (
   receiver_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   body text NOT NULL DEFAULT '',
   type text NOT NULL,
-  viewed boolean DEFAULT false
+  viewed boolean DEFAULT false, -- Keep track of what number of show for notifications
+  clicked boolean DEFAULT false -- Keep track of which card to color differently
 );
 
 -- Need this for INSERT ON CONFLICT UPDATE (upserts)

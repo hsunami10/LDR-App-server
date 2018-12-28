@@ -4,9 +4,10 @@ const wrapper = require('../assets/wrapper');
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const userExists = require('../assets/queries').userExists;
 const getPostsData = require('../assets/queries').getPostsData;
+const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
 
 module.exports = (app, pool) => {
-  app.get('/api/feed/:id', wrapper(async (req, res, next) => {
+  app.get('/api/feed/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
     // Get blocked user ids
     // Get all topics subscribed to
     // Get your posts - where author_id = user_id

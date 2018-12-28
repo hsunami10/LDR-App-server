@@ -4,8 +4,10 @@ const http = require('http');
 const { Pool } = require('pg');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
-const passport = require('passport'); // TODO: Implement authentication
-const session = require('express-session'); // TODO: Implement authentication
+const passport = require('passport');
+const session = require('express-session');
+const pgSession = require('connect-pg-simple')(session);
+const cors = require('cors');
 
 const PORT = process.env.PORT || 3000; // TODO: Change this when in production
 // console.log(process.env);
@@ -19,11 +21,34 @@ pool.on('error', (err, client) => {
   process.exit(-1);
 });
 
+// app.set('trust proxy', 1) // Trust reverse proxy when setting secure cookies
+
 // ========================================== Middleware ==========================================
 // https://expressjs.com/en/guide/error-handling.html
 app.use(morgan('dev')); // Enable HTTP request logging
 app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
+// https://www.npmjs.com/package/express-session
+app.use(session({
+  secret: 'hsunami',
+  store: new pgSession({ pool }),
+  cookie: {
+    // secure: true, // HTTPS connection
+  },
+  resave: false,
+  saveUninitialized: false,
+  unset: 'destroy', // 'keep'
+}));
+
+require('./config/passport')(passport, pool);
+app.use(passport.initialize());
+app.use(passport.session());
+// const corsOptions = {
+//   credentials: true,
+// };
+// app.use(cors(corsOptions));
+// app.use(cors());
+
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
   res.header('Access-Control-Allow-Origin', req.headers.origin);
@@ -32,12 +57,13 @@ app.use((req, res, next) => {
   next();
 });
 
+
 // Server resources
 app.use('/images/topics', express.static(__dirname + '/public/images/topics'));
 app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'));
 
 // ==================================== API Endpoints / Routes ====================================
-require('./routes/authentication')(app, pool);
+require('./routes/authentication')(app, pool, passport);
 require('./routes/comments')(app, pool);
 require('./routes/discover')(app, pool);
 require('./routes/email')(app, pool);
