@@ -7,7 +7,7 @@ const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
 const thirtyMin = require('../assets/constants').THIRTY_MIN; // Seconds
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 // QUESTION: BUG: Might not throw correctly? "wrapper" might not catch it?
 const sendVerificationEmail = (client, data, res, successMessage, { linkID, id, email }) => {
@@ -26,7 +26,7 @@ const sendVerificationEmail = (client, data, res, successMessage, { linkID, id, 
 };
 
 module.exports = (app, pool) => {
-  app.post('/api/send-verification-email', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/send-verification-email', isAuthenticated, wrapper(async (req, res, next) => {
     const { id, email } = req.body;
     const linkID = uuidv4();
     const subject = getFullSubject(EmailSubjectEnum.verification);

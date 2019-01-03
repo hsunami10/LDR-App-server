@@ -4,7 +4,7 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
   app.post('/api/send-email', wrapper(async (req, res, next) => {

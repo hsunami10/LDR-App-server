@@ -7,10 +7,10 @@ const getUserFriends = require('../assets/queries').getUserFriends;
 const removeFriendRequestQuery = require('../assets/queries').removeFriendRequestQuery;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const REQUEST_CANCELLED_MSG = require('../assets/constants').REQUEST_CANCELLED_MSG;
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.get('/api/social/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/social/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { last_id, last_data } = req.query;
@@ -42,7 +42,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.post('/api/social/send-friend-request/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/social/send-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const senderID = req.params.id;
@@ -56,7 +56,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.post('/api/social/accept-friend-request/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/social/accept-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -79,19 +79,19 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.delete('/api/social/reject-friend-request/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/reject-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
     await pool.query(removeFriendRequestQuery(req.query.target_id, req.params.id));
     res.sendStatus(200);
   }))
 
-  app.delete('/api/social/cancel-pending/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/cancel-pending/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { target_id } = req.query;
     await pool.query(`DELETE FROM friend_requests WHERE sender_id = '${id}' AND receiver_id = '${target_id}'`);
     res.sendStatus(200);
   }))
 
-  app.delete('/api/social/unfriend/:id', ensureAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/unfriend/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { target_id } = req.query;
     await pool.query(`DELETE FROM friends WHERE (user1_id = '${id}' AND user2_id = '${target_id}') OR (user1_id = '${target_id}' AND user2_id = '${id}')`);

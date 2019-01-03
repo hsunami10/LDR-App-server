@@ -12,7 +12,11 @@ const compareHash = async (plaintext, hash) => {
   return match;
 };
 
-const ensureAuthenticated = (req, res, next) => {
+const isAuthenticated = (req, res, next) => {
+  console.log('\n' + 'headers: ', req.headers);
+  console.log('\n' + 'cookie: ' + req.headers.cookie + '\n');
+  console.log(req.session);
+
   if (req.isAuthenticated()) {
     return next();
   }
@@ -20,7 +24,7 @@ const ensureAuthenticated = (req, res, next) => {
 }
 
 module.exports = {
-  ensureAuthenticated,
+  isAuthenticated,
   hashPlainText,
   compareHash,
 };

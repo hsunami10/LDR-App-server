@@ -14,12 +14,12 @@ const getUserFriends = require('../assets/queries').getUserFriends;
 const getPostsData = require('../assets/queries').getPostsData;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const getUserInteractions = require('../assets/queries').getUserInteractions;
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.route('/api/user/:id', ensureAuthenticated)
+  app.route('/api/user/:id')
     // NOTE: Similar to assets.paginate.js - users, except no num_friends
-    .get(wrapper(async (req, res, next) => {
+    .get(isAuthenticated, wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { user_id, current_tab, order, direction, last_id, last_data } = req.query;
@@ -93,18 +93,17 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(wrapper(async (req, res, next) => {
+    .post(isAuthenticated, wrapper(async (req, res, next) => {
       res.sendStatus(200);
     }))
-    .put(wrapper(async (req, res, next) => {
+    .put(isAuthenticated, wrapper(async (req, res, next) => {
       res.sendStatus(200);
     }))
-    .delete(wrapper(async (req, res, next) => {
+    .delete(isAuthenticated, wrapper(async (req, res, next) => {
       await pool.query(`SELECT delete_user('${req.params.id}')`);
-      res.sendStatus(200);
     }))
 
-  app.get('/api/user/get-posts/:id', wrapper(async (req, res, next) => {
+  app.get('/api/user/get-posts/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;
@@ -119,7 +118,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/user/get-interactions/:id', wrapper(async (req, res, next) => {
+  app.get('/api/user/get-interactions/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;
@@ -133,7 +132,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/user/get-friends/:id', wrapper(async (req, res, next) => {
+  app.get('/api/user/get-friends/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;

@@ -6,7 +6,7 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 const hashPlainText = require('../assets/authentication').hashPlainText;
 
 module.exports = (app, pool, passport) => {
@@ -45,9 +45,22 @@ module.exports = (app, pool, passport) => {
   // ====================================== Logging In / Out ======================================
   // Only on logging in screen
   app.post('/api/login', passport.authenticate('local'), wrapper(async (req, res, next) => {
-    res.status(200).send({ id: req.user.id });
+    req.login(req.user, (error) => {
+      if (error) {
+        return next(error);
+      }
+      res.status(200).send({ id: req.user.id });
+    });
+    // req.session.save(error => {
+    //   if (error) {
+    //     throw error;
+    //   }
+    //   res.status(200).send({ id: req.user.id });
+    // });
+    // res.status(200).send({ id: req.user.id });
   }));
-  app.get('/api/logout', ensureAuthenticated, wrapper(async (req, res, next) => {
+
+  app.get('/api/logout', isAuthenticated, wrapper(async (req, res, next) => {
     req.logout();
     req.session.destroy((error) => {
       if (error) {
@@ -82,6 +95,18 @@ module.exports = (app, pool, passport) => {
 
   // Only after sign up response
   app.post('/api/start-session', passport.authenticate('local'), wrapper(async (req, res, next) => {
-    res.sendStatus(200);
+    req.login(req.user, (error) => {
+      if (error) {
+        return next(error);
+      }
+      res.sendStatus(200);
+    });
+    // req.session.save(error => {
+    //   if (error) {
+    //     throw error;
+    //   }
+    //   res.sendStatus(200);
+    // });
+    // res.sendStatus(200);
   }))
 };

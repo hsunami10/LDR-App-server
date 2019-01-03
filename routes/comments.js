@@ -6,13 +6,13 @@ const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
-const ensureAuthenticated = require('../assets/authentication').ensureAuthenticated;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.route('/api/comments/:id', ensureAuthenticated)
+  app.route('/api/comments/:id')
     // Similar to fetching feed
     // Only call when paging
-    .get(wrapper(async (req, res, next) => {
+    .get(isAuthenticated, wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { post_id, last_id, last_date } = req.query;
@@ -37,7 +37,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(wrapper(async (req, res, next) => {
+    .post(isAuthenticated, wrapper(async (req, res, next) => {
       // TODO: Finish this later - add comments
       // TODO: See if post still exists - might not need to do this because foreign key violation will handle it
       const client = await pool.connect();
@@ -68,7 +68,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .put(wrapper(async (req, res, next) => {
+    .put(isAuthenticated, wrapper(async (req, res, next) => {
       // TODO: Check to see if comment still exists
       const client = await pool.connect();
       try {
@@ -90,7 +90,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .delete(wrapper(async (req, res, next) => {
+    .delete(isAuthenticated, wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const comment_id = req.params.id;
