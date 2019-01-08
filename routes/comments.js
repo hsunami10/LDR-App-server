@@ -1,18 +1,17 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
   app.route('/api/comments/:id')
     // Similar to fetching feed
     // Only call when paging
-    .get(isAuthenticated, wrapper(async (req, res, next) => {
+    .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { post_id, last_id, last_date } = req.query;
@@ -23,7 +22,7 @@ module.exports = (app, pool) => {
           getBlockedUserIDs(client, user_id)
         ]);
         if (post.rows.length === 0) {
-          res.status(200).send({ success: false, error: NO_POST_MSG });
+          res.status(200).send({ success: false, message: NO_POST_MSG });
         } else {
           const filterQuery = filterBlockedQuery('comments', blocked);
           const result = await getComments(
@@ -37,7 +36,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(isAuthenticated, wrapper(async (req, res, next) => {
+    .post(wrapper(async (req, res, next) => {
       // TODO: Finish this later - add comments
       // TODO: See if post still exists - might not need to do this because foreign key violation will handle it
       const client = await pool.connect();
@@ -68,7 +67,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .put(isAuthenticated, wrapper(async (req, res, next) => {
+    .put(wrapper(async (req, res, next) => {
       // TODO: Check to see if comment still exists
       const client = await pool.connect();
       try {
@@ -90,7 +89,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .delete(isAuthenticated, wrapper(async (req, res, next) => {
+    .delete(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const comment_id = req.params.id;

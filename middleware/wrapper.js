@@ -3,7 +3,7 @@ const {
   NO_USER_MSG,
   NO_POST_MSG,
   NO_COMMENT_MSG
-} = require('./constants');
+} = require('../assets/constants');
 
 // Generate an error message for foreign key constraint errors
 // NOTE: If table names / number changes, change this too

@@ -1,32 +1,31 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const upload = require('../config/multer');
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
   app.route('/api/topics/:id')
-    .get(isAuthenticated, wrapper(async (req, res, next) => {
+    .get(wrapper(async (req, res, next) => {
       // TODO: Get specified topic's posts
       // TODO: Paginate with query params
       // req.params.id - topic id
     }))
-    .put(isAuthenticated, wrapper(async (req, res, next) => {
+    .put(wrapper(async (req, res, next) => {
       // TODO: Update specified topic
       // req.params.id - topic id
       /*
       req.body = user_id (to check if admin of topic),
        */
     }))
-    .delete(isAuthenticated, wrapper(async (req, res, next) => {
+    .delete(wrapper(async (req, res, next) => {
       // TODO: Delete topic
       // req.params.id - topic id
     }))
 
   // NOTE: Similar format to assets/paginate - topics
-  app.get('/api/topics/subscribed/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/topics/subscribed/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -39,7 +38,7 @@ module.exports = (app, pool) => {
     }
   }));
 
-  app.post('/api/topics/create/:id', isAuthenticated, upload.single('clientImage'), wrapper(async (req, res, next) => {
+  app.post('/api/topics/create/:id', upload.single('clientImage'), wrapper(async (req, res, next) => {
     const client = await pool.connect();
     const date = moment().unix();
     const { name, description, topic_id } = req.body;
@@ -72,14 +71,14 @@ module.exports = (app, pool) => {
           }
         });
       } else {
-        res.status(200).send({ success: false, error: 'Topic name already taken' });
+        res.status(200).send({ success: false, message: 'Topic name already taken' });
       }
     } finally {
       client.release();
     }
   }))
 
-  app.post('/api/topics/subscribe/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/topics/subscribe/:id', wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { topic_id } = req.body;
     const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];
@@ -87,7 +86,7 @@ module.exports = (app, pool) => {
     res.sendStatus(200);
   }))
 
-  app.delete('/api/topics/unsubscribe/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/topics/unsubscribe/:id', wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { topic_id } = req.body;
     const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];

@@ -1,12 +1,11 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const getPostsData = require('../assets/queries').getPostsData;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.get('/api/feed/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/feed/:id', wrapper(async (req, res, next) => {
     // Get blocked user ids
     // Get all topics subscribed to
     // Get your posts - where author_id = user_id

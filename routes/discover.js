@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
@@ -8,10 +8,9 @@ const getPostsData = require('../assets/queries').getPostsData;
 const getUsersData = require('../assets/queries').getUsersData;
 const getTopicsData = require('../assets/queries').getTopicsData;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.get('/api/discover/posts/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/discover/posts/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -25,7 +24,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/discover/users/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/discover/users/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -39,7 +38,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/discover/topics/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/discover/topics/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;

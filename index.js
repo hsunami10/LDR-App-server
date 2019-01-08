@@ -4,10 +4,7 @@ const http = require('http');
 const { Pool } = require('pg');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
-const passport = require('passport');
 const helmet = require('helmet');
-const session = require('express-session');
-const pgSession = require('connect-pg-simple')(session);
 // const cors = require('cors');
 
 const PORT = process.env.PORT || 3000; // TODO: Change this when in production
@@ -29,7 +26,7 @@ pool.on('error', (err, client) => {
 app.use(helmet());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000'); // TODO: Do not hardcode this
   res.header('Access-Control-Allow-Methods', 'POST,GET,PUT,PATCH,DELETE'); // CRUD - create, read, update, delete
   res.header('Access-Control-Allow-Headers', 'X-Requested-With,X-HTTP-Method-Override,Content-Type,Accept,Authorization,Access-Control-Allow-Credentials,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers');
   next();
@@ -38,25 +35,6 @@ app.use((req, res, next) => {
 app.use(morgan('dev')); // Enable HTTP request logging
 app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
-// https://www.npmjs.com/package/express-session
-app.use(session({
-  secret: 'hsunami',
-  store: new pgSession({ pool }), // Where to store session data
-  cookie: {
-    path: '/',
-    httpOnly: false,
-    maxAge: null,
-    // secure: true, // HTTPS connection
-  },
-  resave: false,
-  saveUninitialized: false,
-  unset: 'destroy', // default: 'keep'
-}));
-
-require('./config/passport')(passport, pool);
-app.use(passport.initialize());
-app.use(passport.session());
-
 // const corsOptions = {
 //   credentials: true,
 //   origin: 'http://localhost:3000'
@@ -68,7 +46,7 @@ app.use('/images/topics', express.static(__dirname + '/public/images/topics'));
 app.use('/images/profiles', express.static(__dirname + '/public/images/profiles'));
 
 // ==================================== API Endpoints / Routes ====================================
-require('./routes/authentication')(app, pool, passport);
+require('./routes/authentication')(app, pool);
 require('./routes/comments')(app, pool);
 require('./routes/discover')(app, pool);
 require('./routes/email')(app, pool);

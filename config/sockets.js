@@ -6,11 +6,11 @@ module.exports = (server, pool) => {
   io.on('connection', socket => {
     console.log('user connected with ID: ' + socket.id);
 
-    socket.on('initialize-connection', userID => {
-      console.log('initialized connection with user ID: ' + userID);
-      SOCKETID_TO_USERID[socket.id] = userID;
-      USERID_TO_SOCKET[userID] = socket;
-      socket.emit('connection-success');
+    socket.on('initialize-connection', data => {
+      console.log('initialized connection with user ID: ' + data.id);
+      SOCKETID_TO_USERID[socket.id] = data.id;
+      USERID_TO_SOCKET[data.id] = socket;
+      socket.emit('connection-success', data.changeIOCookie);
     });
 
     socket.on('disconnect', () => {

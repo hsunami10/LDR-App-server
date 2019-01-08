@@ -1,15 +1,16 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 const hashPlainText = require('../assets/authentication').hashPlainText;
 
-module.exports = (app, pool, passport) => {
+// TODO: Change cookie-based authentication to token-based authentication
+
+module.exports = (app, pool) => {
   // ======================================= Forgot Password =======================================
   app.post('/api/login/forgot-password', wrapper(async (req, res, next) => {
     const { email } = req.body;
@@ -44,30 +45,14 @@ module.exports = (app, pool, passport) => {
 
   // ====================================== Logging In / Out ======================================
   // Only on logging in screen
-  app.post('/api/login', passport.authenticate('local'), wrapper(async (req, res, next) => {
-    req.login(req.user, (error) => {
-      if (error) {
-        return next(error);
-      }
-      res.status(200).send({ id: req.user.id });
-    });
-    // req.session.save(error => {
-    //   if (error) {
-    //     throw error;
-    //   }
-    //   res.status(200).send({ id: req.user.id });
-    // });
-    // res.status(200).send({ id: req.user.id });
+  app.post('/api/login', wrapper(async (req, res, next) => {
+    // TODO: Finish this later
+    res.status(200).send({ id: req.user.id });
   }));
 
-  app.get('/api/logout', isAuthenticated, wrapper(async (req, res, next) => {
-    req.logout();
-    req.session.destroy((error) => {
-      if (error) {
-        throw error;
-      }
-      res.sendStatus(200);
-    });
+  app.get('/api/logout', wrapper(async (req, res, next) => {
+    // TODO: Finish this later
+    res.sendStatus(200);
   }));
 
   // ========================================== Signing Up ==========================================
@@ -94,19 +79,8 @@ module.exports = (app, pool, passport) => {
   }))
 
   // Only after sign up response
-  app.post('/api/start-session', passport.authenticate('local'), wrapper(async (req, res, next) => {
-    req.login(req.user, (error) => {
-      if (error) {
-        return next(error);
-      }
-      res.sendStatus(200);
-    });
-    // req.session.save(error => {
-    //   if (error) {
-    //     throw error;
-    //   }
-    //   res.sendStatus(200);
-    // });
-    // res.sendStatus(200);
+  app.post('/api/start-session', wrapper(async (req, res, next) => {
+    // TODO: Finish this later
+    res.sendStatus(200);
   }))
 };

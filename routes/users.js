@@ -1,6 +1,6 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const mailgun = require('../config/mail').mailgun;
 const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
@@ -14,12 +14,11 @@ const getUserFriends = require('../assets/queries').getUserFriends;
 const getPostsData = require('../assets/queries').getPostsData;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const getUserInteractions = require('../assets/queries').getUserInteractions;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
   app.route('/api/user/:id')
     // NOTE: Similar to assets.paginate.js - users, except no num_friends
-    .get(isAuthenticated, wrapper(async (req, res, next) => {
+    .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { user_id, current_tab, order, direction, last_id, last_data } = req.query;
@@ -30,7 +29,7 @@ module.exports = (app, pool) => {
           getBlockedUserIDs(client, user_id)
         ]);
         if (user.rows.length === 0 || blocked.includes(targetID)) {
-          res.status(200).send({ success: false, error: NO_USER_MSG });
+          res.status(200).send({ success: false, message: NO_USER_MSG });
         } else {
           let partner, posts, interactions, friends;
           // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
@@ -93,17 +92,17 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(isAuthenticated, wrapper(async (req, res, next) => {
+    .post(wrapper(async (req, res, next) => {
       res.sendStatus(200);
     }))
-    .put(isAuthenticated, wrapper(async (req, res, next) => {
+    .put(wrapper(async (req, res, next) => {
       res.sendStatus(200);
     }))
-    .delete(isAuthenticated, wrapper(async (req, res, next) => {
+    .delete(wrapper(async (req, res, next) => {
       await pool.query(`SELECT delete_user('${req.params.id}')`);
     }))
 
-  app.get('/api/user/get-posts/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/user/get-posts/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;
@@ -118,7 +117,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/user/get-interactions/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/user/get-interactions/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;
@@ -132,7 +131,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/user/get-friends/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/user/get-friends/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const targetID = req.params.id;

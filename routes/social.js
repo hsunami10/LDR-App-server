@@ -1,16 +1,15 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const getUserRequests = require('../assets/queries').getUserRequests;
 const getPendingRequests = require('../assets/queries').getPendingRequests;
 const getUserFriends = require('../assets/queries').getUserFriends;
 const removeFriendRequestQuery = require('../assets/queries').removeFriendRequestQuery;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const REQUEST_CANCELLED_MSG = require('../assets/constants').REQUEST_CANCELLED_MSG;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 module.exports = (app, pool) => {
-  app.get('/api/social/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.get('/api/social/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { last_id, last_data } = req.query;
@@ -42,7 +41,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.post('/api/social/send-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/social/send-friend-request/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const senderID = req.params.id;
@@ -56,7 +55,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.post('/api/social/accept-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.post('/api/social/accept-friend-request/:id', wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params;
@@ -64,7 +63,7 @@ module.exports = (app, pool) => {
       const cancelled = await client.query(`SELECT id FROM friend_requests WHERE sender_id = '${targetID}' AND receiver_id = '${id}'`);
       // Don't need to check if the same user sent a friend request, because that should not happen
       if (cancelled.rows.length === 0) { // Request already cancelled before accepted
-        res.status(200).send({ success: false, error: REQUEST_CANCELLED_MSG });
+        res.status(200).send({ success: false, message: REQUEST_CANCELLED_MSG });
       } else {
         // Remove from friend_requests
         // Add to friends
@@ -79,19 +78,19 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.delete('/api/social/reject-friend-request/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/reject-friend-request/:id', wrapper(async (req, res, next) => {
     await pool.query(removeFriendRequestQuery(req.query.target_id, req.params.id));
     res.sendStatus(200);
   }))
 
-  app.delete('/api/social/cancel-pending/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/cancel-pending/:id', wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { target_id } = req.query;
     await pool.query(`DELETE FROM friend_requests WHERE sender_id = '${id}' AND receiver_id = '${target_id}'`);
     res.sendStatus(200);
   }))
 
-  app.delete('/api/social/unfriend/:id', isAuthenticated, wrapper(async (req, res, next) => {
+  app.delete('/api/social/unfriend/:id', wrapper(async (req, res, next) => {
     const { id } = req.params;
     const { target_id } = req.query;
     await pool.query(`DELETE FROM friends WHERE (user1_id = '${id}' AND user2_id = '${target_id}') OR (user1_id = '${target_id}' AND user2_id = '${id}')`);
