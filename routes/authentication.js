@@ -6,7 +6,7 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const hashPlainText = require('../assets/authentication').hashPlainText;
+const hashPassword = require('../assets/encryption').hashPassword;
 
 // TODO: Change cookie-based authentication to token-based authentication
 
@@ -61,13 +61,13 @@ module.exports = (app, pool) => {
     try {
       const { username, password } = req.body;
       const id = uuidv4();
-      let res2, hashPassword;
-      [res2, hashPassword] = await Promise.all([
+      let res2, hashedPassword;
+      [res2, hashedPassword] = await Promise.all([
         client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}' AND deleted = false`),
-        hashPlainText(password)
+        hashPassword(password)
       ]);
       if (res2.rows.length === 0) {
-        const cols = [id, username, username.toLowerCase(), hashPassword, moment().unix()];
+        const cols = [id, username, username.toLowerCase(), hashedPassword, moment().unix()];
         await client.query(`INSERT INTO users (id, username, lowercase_username, password, date_joined) VALUES ($1, $2, $3, $4, $5)`, cols);
         res.status(200).send({ id });
       } else {

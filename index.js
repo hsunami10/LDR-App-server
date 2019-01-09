@@ -5,7 +5,7 @@ const { Pool } = require('pg');
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
 const helmet = require('helmet');
-// const cors = require('cors');
+const cors = require('cors');
 
 const PORT = process.env.PORT || 3000; // TODO: Change this when in production
 // console.log(process.env);
@@ -23,6 +23,12 @@ pool.on('error', (err, client) => {
 
 // ========================================== Middleware ==========================================
 // https://expressjs.com/en/guide/error-handling.html
+// const corsOptions = {
+//   credentials: true,
+//   origin: 'http://localhost:3000'
+// };
+// app.use(cors(corsOptions));
+app.use(cors());
 app.use(helmet());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
@@ -35,11 +41,6 @@ app.use((req, res, next) => {
 app.use(morgan('dev')); // Enable HTTP request logging
 app.use(bodyParser.json()); // Parse incoming requests as JSON (request body)
 app.use(bodyParser.urlencoded({ extended: false }));
-// const corsOptions = {
-//   credentials: true,
-//   origin: 'http://localhost:3000'
-// };
-// app.use(cors(corsOptions));
 
 // Server resources
 app.use('/images/topics', express.static(__dirname + '/public/images/topics'));

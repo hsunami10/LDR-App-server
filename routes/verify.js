@@ -15,7 +15,7 @@ const sendVerificationEmail = (client, data, res, successMessage, { linkID, id, 
       res.status(200).send({ msg: 'Email cannot be sent, please check if it\'s valid' });
     } else {
       (async () => {
-        await client.query(`UPDATE users SET email = '${email}', token = '${linkID}', token_time = ${moment().unix()}, email_verified = ${false} WHERE id = '${id}'`);
+        await client.query(`UPDATE users SET email = '${email}', email_token = '${linkID}', email_token_exp = ${moment().unix()}, email_verified = ${false} WHERE id = '${id}'`);
         res.status(200).send({ msg: successMessage, success: true });
       })().catch(err => {
         res.status(500).send(new Error(`Something went wrong: ${err.message}`));
@@ -43,7 +43,7 @@ module.exports = (app, pool) => {
     const client = await pool.connect();
     try {
       // Check if there's an existing user with the email
-      const res2 = await client.query(`SELECT id, email_verified, token_time FROM users WHERE email = '${email}' AND deleted = false`);
+      const res2 = await client.query(`SELECT id, email_verified, email_token_exp FROM users WHERE email = '${email}' AND deleted = false`);
       if (res2.rows.length === 0) { // No existing email
         // QUESTION: Do I even need this check here?
         const res3 = await client.query(`SELECT email, email_verified FROM users WHERE id = '${id}' AND deleted = false`);
@@ -56,7 +56,7 @@ module.exports = (app, pool) => {
         if (res2.rows[0].id === id) { // If the email exists and the same user requesting
           if (res2.rows[0].email_verified) {
             res.status(200).send({ msg: 'Email address already verified' });
-          } else if (moment().unix() - res2.rows[0].token_time < thirtyMin) {
+          } else if (moment().unix() - res2.rows[0].email_token_exp < thirtyMin) {
             res.status(200).send({ msg: 'Verification email already sent' });
           } else {
             sendVerificationEmail(client, data, res, successMessage, { linkID, id, email });
@@ -74,11 +74,11 @@ module.exports = (app, pool) => {
     const now = moment().unix();
     const client = await pool.connect();
     try {
-      const res2 = await client.query(`SELECT token_time FROM users WHERE token = '${req.params.id}' AND deleted = false`);
+      const res2 = await client.query(`SELECT email_token_exp FROM users WHERE email_token = '${req.params.id}' AND deleted = false`);
       if (res2.rows.length === 0) {
         res.send('Oops! This link has expired. You will see a "link expired" page here.');
-      } else if (now - res2.rows[0].token_time < thirtyMin) {
-        await client.query(`UPDATE users SET email_verified = ${true}, token = null WHERE token = '${req.params.id}'`);
+      } else if (now - res2.rows[0].email_token_exp < thirtyMin) {
+        await client.query(`UPDATE users SET email_verified = ${true}, email_token = null WHERE email_token = '${req.params.id}'`);
         res.send('Email Verified!');
       } else {
         res.send('Oops! This link has expired. You will see a "link expired" page here.');
