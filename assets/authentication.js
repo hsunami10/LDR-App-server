@@ -13,14 +13,10 @@ const compareHash = async (plaintext, hash) => {
 };
 
 const isAuthenticated = (req, res, next) => {
-  console.log('\n' + 'headers: ', req.headers);
-  console.log('\n' + 'cookie: ' + req.headers.cookie + '\n');
-  console.log(req.session);
-
   if (req.isAuthenticated()) {
     return next();
   }
-  res.status(200).send({ success: false, error: NO_USER_MSG });
+  res.status(401).send(NO_USER_MSG);
 }
 
 module.exports = {

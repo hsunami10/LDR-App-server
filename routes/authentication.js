@@ -51,20 +51,17 @@ module.exports = (app, pool, passport) => {
       }
       res.status(200).send({ id: req.user.id });
     });
-    // req.session.save(error => {
-    //   if (error) {
-    //     throw error;
-    //   }
-    //   res.status(200).send({ id: req.user.id });
-    // });
-    // res.status(200).send({ id: req.user.id });
   }));
+
+  app.get('/api/login/callback', isAuthenticated, wrapper(async (req, res, next) => {
+    res.status(200).send({ cookie: req.headers.cookie });
+  }))
 
   app.get('/api/logout', isAuthenticated, wrapper(async (req, res, next) => {
     req.logout();
     req.session.destroy((error) => {
       if (error) {
-        throw error;
+        return next(error);
       }
       res.sendStatus(200);
     });
@@ -94,19 +91,12 @@ module.exports = (app, pool, passport) => {
   }))
 
   // Only after sign up response
-  app.post('/api/start-session', passport.authenticate('local'), wrapper(async (req, res, next) => {
+  app.post('/api/signup/callback', passport.authenticate('local'), wrapper(async (req, res, next) => {
     req.login(req.user, (error) => {
       if (error) {
         return next(error);
       }
       res.sendStatus(200);
     });
-    // req.session.save(error => {
-    //   if (error) {
-    //     throw error;
-    //   }
-    //   res.sendStatus(200);
-    // });
-    // res.sendStatus(200);
   }))
 };

@@ -29,9 +29,9 @@ pool.on('error', (err, client) => {
 app.use(helmet());
 app.use((req, res, next) => {
   res.header('Access-Control-Allow-Credentials', true);
-  res.header('Access-Control-Allow-Origin', 'http://localhost:3000');
+  res.header('Access-Control-Allow-Origin', 'http://localhost:3000'); // TODO: Do not hardcode this
   res.header('Access-Control-Allow-Methods', 'POST,GET,PUT,PATCH,DELETE'); // CRUD - create, read, update, delete
-  res.header('Access-Control-Allow-Headers', 'X-Requested-With,X-HTTP-Method-Override,Content-Type,Accept,Authorization,Access-Control-Allow-Credentials,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers');
+  res.header('Access-Control-Allow-Headers', 'X-Requested-With,X-HTTP-Method-Override,Content-Type,Accept,Access-Control-Allow-Credentials,Access-Control-Allow-Origin,Access-Control-Allow-Methods,Access-Control-Allow-Headers');
   next();
 });
 
@@ -86,5 +86,4 @@ require('./routes/users')(app, pool);
 require('./routes/verify')(app, pool);
 
 const server = http.Server(app);
-require('./config/sockets')(server, pool);
 server.listen(PORT, () => console.log(`Server listening on port ${PORT}`));
