@@ -12,8 +12,8 @@ CREATE TABLE users (
   date_joined bigint NOT NULL,
   location geography,
   coordinates text, -- longitude latitude
-  token text UNIQUE,
-  token_time bigint,
+  email_token text UNIQUE,
+  email_token_exp bigint,
   email_verified boolean DEFAULT false,
   user_type text NOT NULL DEFAULT 'standard', -- 'admin', 'standard'
   deleted boolean NOT NULL DEFAULT false

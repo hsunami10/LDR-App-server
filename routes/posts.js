@@ -1,17 +1,16 @@
 const uuidv4 = require('uuid/v4');
 const moment = require('moment');
-const wrapper = require('../assets/wrapper');
+const wrapper = require('../middleware/wrapper');
 const pageCommentsQuery = require('../assets/paginate').comments;
 const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
-const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 // get post put delete single posts
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
-    .get(isAuthenticated, wrapper(async (req, res, next) => {
+    .get(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { length, post_id } = req.query;
@@ -22,7 +21,7 @@ module.exports = (app, pool) => {
           getBlockedUserIDs(client, user_id)
         ]);
         if (post.rows.length === 0) {
-          res.status(200).send({ success: false, error: NO_POST_MSG });
+          res.status(200).send({ success: false, message: NO_POST_MSG });
         } else {
           // Get post
           // NOTE: Match format of helpers/paginate.posts & helpers/paginate.feed query
@@ -53,7 +52,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(isAuthenticated, wrapper(async (req, res, next) => {
+    .post(wrapper(async (req, res, next) => {
       const { topic_id, body, coordinates } = req.body;
       const post_id = uuidv4();
       const date = moment().unix();
@@ -73,7 +72,7 @@ module.exports = (app, pool) => {
         num_comments: 0
       });
     }))
-    .put(isAuthenticated, wrapper(async (req, res, next) => {
+    .put(wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         // req.params.id - user id
@@ -120,7 +119,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .delete(isAuthenticated, wrapper(async (req, res, next) => {
+    .delete(wrapper(async (req, res, next) => {
       const post_id = req.params.id;
       await pool.query(`DELETE FROM posts WHERE id = '${post_id}'`);
       res.sendStatus(200);

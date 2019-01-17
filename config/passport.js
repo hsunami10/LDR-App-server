@@ -1,4 +1,4 @@
-const compareHash = require('../assets/authentication').compareHash;
+const compareHash = require('../assets/encryption').compareHash;
 const LocalStrategy = require('passport-local');
 
 // https://stackoverflow.com/questions/27637609/understanding-passport-serialize-deserialize
