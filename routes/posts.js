@@ -6,11 +6,12 @@ const getComments = require('../assets/queries').getComments;
 const getBlockedUserIDs = require('../assets/queries').getBlockedUserIDs;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_POST_MSG = require('../assets/constants').NO_POST_MSG;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 // get post put delete single posts
 module.exports = (app, pool) => {
   app.route('/api/posts/:id')
-    .get(wrapper(async (req, res, next) => {
+    .get(isAuthenticated, wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         const { length, post_id } = req.query;
@@ -52,7 +53,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .post(wrapper(async (req, res, next) => {
+    .post(isAuthenticated, wrapper(async (req, res, next) => {
       const { topic_id, body, coordinates } = req.body;
       const post_id = uuidv4();
       const date = moment().unix();
@@ -72,7 +73,7 @@ module.exports = (app, pool) => {
         num_comments: 0
       });
     }))
-    .put(wrapper(async (req, res, next) => {
+    .put(isAuthenticated, wrapper(async (req, res, next) => {
       const client = await pool.connect();
       try {
         // req.params.id - user id
@@ -119,7 +120,7 @@ module.exports = (app, pool) => {
         client.release();
       }
     }))
-    .delete(wrapper(async (req, res, next) => {
+    .delete(isAuthenticated, wrapper(async (req, res, next) => {
       const post_id = req.params.id;
       await pool.query(`DELETE FROM posts WHERE id = '${post_id}'`);
       res.sendStatus(200);

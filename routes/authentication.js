@@ -6,11 +6,12 @@ const devEmail = require('../config/mail').devEmail;
 const EmailSubjectEnum = require('../config/mail').EmailSubjectEnum;
 const getFullSubject = require('../config/mail').getFullSubject;
 const getSuccessMessage = require('../config/mail').getSuccessMessage;
-const hashPassword = require('../assets/encryption').hashPassword;
+const hashPlainText = require('../assets/authentication').hashPlainText;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 // TODO: Change cookie-based authentication to token-based authentication
 
-module.exports = (app, pool) => {
+module.exports = (app, pool, passport) => {
   // ======================================= Forgot Password =======================================
   app.post('/api/login/forgot-password', wrapper(async (req, res, next) => {
     const { email } = req.body;
@@ -77,7 +78,7 @@ module.exports = (app, pool) => {
       let res2, hashedPassword;
       [res2, hashedPassword] = await Promise.all([
         client.query(`SELECT id FROM users WHERE lowercase_username = '${username.toLowerCase()}' AND deleted = false`),
-        hashPassword(password)
+        hashPlainText(password)
       ]);
       if (res2.rows.length === 0) {
         const cols = [id, username, username.toLowerCase(), hashedPassword, moment().unix()];

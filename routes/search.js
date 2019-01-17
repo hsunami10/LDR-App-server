@@ -9,6 +9,7 @@ const rowsToOrderAndObj = require('../assets/helpers').rowsToOrderAndObj;
 const filterBlockedQuery = require('../assets/helpers').filterBlockedQuery;
 const NO_USER_MSG = require('../assets/constants').NO_USER_MSG;
 const SortListTypes = require('../assets/constants').SortListTypes;
+const isAuthenticated = require('../assets/authentication').isAuthenticated;
 
 const filterUsers = (blocked, term) => {
   const filter = filterBlockedQuery('users', blocked);
@@ -24,7 +25,7 @@ const filterTopics = term => `(topics.lowercase_name LIKE '%${term.toLowerCase()
 
 module.exports = (app, pool) => {
   // TODO: Use real orders and directions for all three, instead of hardcoded
-  app.get('/api/search/search-term/:id', wrapper(async (req, res, next) => {
+  app.get('/api/search/search-term/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params; // all_searches id
@@ -57,7 +58,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/search/get-user-searches/:id', wrapper(async (req, res, next) => {
+  app.get('/api/search/get-user-searches/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params; // user id
     const { term } = req.query;
     let searches;
@@ -69,13 +70,13 @@ module.exports = (app, pool) => {
     res.status(200).send(rowsToOrderAndObj(searches.rows, 'id'));
   }))
 
-  app.delete('/api/search/remove-user-search/:id', wrapper(async (req, res, next) => {
+  app.delete('/api/search/remove-user-search/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params; // user_searches id
     await pool.query(`DELETE FROM user_searches WHERE id = '${id}'`);
     res.sendStatus(200);
   }))
 
-  app.get('/api/search/get-posts/:id', wrapper(async (req, res, next) => {
+  app.get('/api/search/get-posts/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params; // all_searches id
@@ -89,7 +90,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/search/get-users/:id', wrapper(async (req, res, next) => {
+  app.get('/api/search/get-users/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params; // all_searches id
@@ -103,7 +104,7 @@ module.exports = (app, pool) => {
     }
   }))
 
-  app.get('/api/search/get-topics/:id', wrapper(async (req, res, next) => {
+  app.get('/api/search/get-topics/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const client = await pool.connect();
     try {
       const { id } = req.params; // all_searches id
