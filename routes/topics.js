@@ -89,7 +89,7 @@ module.exports = (app, pool) => {
 
   app.delete('/api/topics/unsubscribe/:id', isAuthenticated, wrapper(async (req, res, next) => {
     const { id } = req.params;
-    const { topic_id } = req.body;
+    const { topic_id } = req.query;
     const cols = [uuidv4(), id, topic_id, false, moment().unix(), 'standard'];
     await pool.query(`DELETE FROM topic_subscribers WHERE subscriber_id = '${id}' AND topic_id = '${topic_id}'`);
     res.sendStatus(200);
