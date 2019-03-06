@@ -1,4 +1,7 @@
 -- TODO: Change all id PRIMARY KEY columns to type UUID instead of TEXT
+CREATE EXTENSION postgis; -- https://postgis.net/
+CREATE EXTENSION plpgsql;
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Dummy user
 CREATE TABLE users (
@@ -10,8 +13,8 @@ CREATE TABLE users (
   email text UNIQUE,
   profile_pic text UNIQUE, -- filename.extension
   date_joined bigint NOT NULL,
-  location geography,
-  coordinates text, -- longitude latitude
+  -- location geography,
+  -- coordinates text, -- longitude latitude
   email_token text UNIQUE,
   email_token_exp bigint,
   email_verified boolean DEFAULT false,
@@ -37,20 +40,6 @@ CREATE TABLE topic_subscribers (
   subscriber_type text NOT NULL DEFAULT 'standard' -- 'admin', 'standard', QUESTION: Who will be admin if admin deletes user account?
 );
 
--- NOTE: user1_id - generates request_code. user2_id - searches with code and accepts
--- When adding user2_id as something OTHER THAN '', remove all instances of user1_id that equals that user2_id
--- Default user2_id to ''
-CREATE TABLE partners (
-  id text PRIMARY KEY,
-  user1_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  user2_id text UNIQUE REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
-  date_together bigint, -- start date
-  request_code text NOT NULL UNIQUE,
-  date_requested bigint NOT NULL, -- 30 min limit
-  countdown bigint,
-  type text NOT NULL DEFAULT 'in-person' -- 'ldr', 'in-person', 'both'
-);
-
 -- Only add row if mutual friends
 -- When adding a row, remove the related row from friend_requests
 CREATE TABLE friends (
@@ -67,7 +56,7 @@ CREATE TABLE friend_requests (
   date_sent bigint NOT NULL
 );
 
--- Remove from friend_requests, friends, partners tables when adding here
+-- Remove from friend_requests, friends, tables when adding here
 CREATE TABLE blocked (
   id text PRIMARY KEY,
   user1_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
@@ -88,9 +77,9 @@ CREATE TABLE posts (
   author_id text REFERENCES users (id) ON UPDATE CASCADE ON DELETE CASCADE,
   date_posted bigint NOT NULL,
   body text NOT NULL DEFAULT '',
-  hidden boolean NOT NULL DEFAULT false,
-  location geography,
-  coordinates text -- longitude latitude
+  hidden boolean NOT NULL DEFAULT false
+  -- location geography,
+  -- coordinates text -- longitude latitude
 );
 
 CREATE TABLE comments (
@@ -155,45 +144,45 @@ CREATE TABLE notifications (
 
 -- Need this for INSERT ON CONFLICT UPDATE (upserts)
 ALTER TABLE interactions ADD CONSTRAINT interactions_user_id_post_id_constraint UNIQUE (user_id, post_id);
-ALTER TABLE partners ADD CONSTRAINT partners_user1_id_user2_id_constraint UNIQUE (user1_id, user2_id);
 ALTER TABLE friend_requests ADD CONSTRAINT friend_requests_sender_receiver_id_constraint UNIQUE (sender_id, receiver_id);
 ALTER TABLE all_searches ADD CONSTRAINT all_searches_search_term_lowercase_constraint UNIQUE (search_term, lowercase_search_term);
 ALTER TABLE user_searches ADD CONSTRAINT user_searches_user_id_lowercase_search_term UNIQUE (user_id, lowercase_search_term);
 
 -- Insert dummy user
-INSERT INTO users VALUES (
-  '',
-  '',
-  '',
-  '',
-  NULL,
-  NULL,
-  0,
-  NULL,
-  NULL,
-  '',
-  0,
-  NULL,
-  NULL,
-  'standard'
-);
-
-INSERT INTO posts VALUES (
-  '',
-  '',
-  '',
-  0,
-  '',
-  null,
-  '',
-  false
-);
-
-INSERT INTO topics VALUES (
-  '',
-  '',
-  '',
-  '',
-  '',
-  0
-);
+-- INSERT INTO users VALUES (
+--   '',
+--   '',
+--   '',
+--   '',
+--   '',
+--   NULL,
+--   NULL,
+--   0,
+--   -- NULL,
+--   -- '',
+--   NULL,
+--   0,
+--   false,
+--   'standard',
+--   false
+-- );
+--
+-- INSERT INTO posts VALUES (
+--   '',
+--   '',
+--   '',
+--   0,
+--   '',
+--   null,
+--   '',
+--   false
+-- );
+--
+-- INSERT INTO topics VALUES (
+--   '',
+--   '',
+--   '',
+--   '',
+--   '',
+--   0
+-- );

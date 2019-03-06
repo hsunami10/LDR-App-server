@@ -12,7 +12,6 @@ BEGIN
   DELETE FROM blocked WHERE user1_id = u_id OR user2_id = u_id;
   DELETE FROM friend_requests WHERE sender_id = u_id OR receiver_id = u_id;
   DELETE FROM friends WHERE user1_id = u_id OR user2_id = u_id;
-  DELETE FROM partners WHERE user1_id = u_id OR user2_id = u_id;
   DELETE FROM topic_subscribers WHERE subscriber_id = u_id;
 END;
 $BODY$ LANGUAGE plpgsql;

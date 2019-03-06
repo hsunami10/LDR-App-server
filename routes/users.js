@@ -32,10 +32,8 @@ module.exports = (app, pool) => {
         if (user.rows.length === 0 || blocked.includes(targetID)) {
           res.status(200).send({ success: false, message: NO_USER_MSG });
         } else {
-          let partner, posts, interactions, friends;
-          // NOTE: Make sure this is the same as routes/partner.js put() /api/partner/accept, partner query - SAME AS GET_USER_PARTNER
+          let posts, interactions, friends;
           // If there's no row, it returns an object with all values = null
-          const partnersQuery = `SELECT * FROM get_user_partner('${targetID}') AS (id text, username text, profile_pic text, date_together bigint, countdown bigint, type text)`;
           let filterPostsQuery = filterBlockedQuery('posts', blocked);
           const filterInteractionsQuery = filterPostsQuery;
           filterPostsQuery = `posts.author_id = '${targetID}' AND (${filterPostsQuery === '' ? 'true' : filterPostsQuery})`;
@@ -44,44 +42,32 @@ module.exports = (app, pool) => {
           // Handle loading data from 3 different tabs
           switch (current_tab) {
             case 'posts':
-              [partner, posts] = await Promise.all([
-                client.query(partnersQuery),
-                getPostsData(client, user_id, filterPostsQuery, order, direction, last_id, last_data)
-              ]);
+              posts = await getPostsData(client, user_id, filterPostsQuery, order, direction, last_id, last_data);
               res.status(200).send({
                 success: true,
                 user: {
                   ...user.rows[0],
-                  posts,
-                  partner: partner.rows[0].id ? partner.rows[0] : null
+                  posts
                 }
               });
               break;
             case 'interactions':
-              [partner, interactions] = await Promise.all([
-                client.query(partnersQuery),
-                getUserInteractions(client, targetID, filterInteractionsQuery, last_id, last_data)
-              ]);
+              interactions = await getUserInteractions(client, targetID, filterInteractionsQuery, last_id, last_data);
               res.status(200).send({
                 success: true,
                 user: {
                   ...user.rows[0],
-                  interactions,
-                  partner: partner.rows[0].id ? partner.rows[0] : null
+                  interactions
                 }
               });
               break;
             case 'friends':
-              [partner, friends] = await Promise.all([
-                client.query(partnersQuery),
-                getUserFriends(client, targetID, filterUsersQuery, order, direction, last_id, last_data)
-              ]);
+              friends = await getUserFriends(client, targetID, filterUsersQuery, order, direction, last_id, last_data);
               res.status(200).send({
                 success: true,
                 user: {
                   ...user.rows[0],
-                  friends,
-                  partner: partner.rows[0].id ? partner.rows[0] : null
+                  friends
                 }
               });
               break;

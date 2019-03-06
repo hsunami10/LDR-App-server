@@ -74,7 +74,6 @@ require('./routes/discover')(app, pool);
 require('./routes/email')(app, pool);
 require('./routes/feed')(app, pool);
 require('./routes/notifications')(app, pool);
-require('./routes/partner')(app, pool);
 require('./routes/posts')(app, pool);
 require('./routes/profile')(app, pool);
 require('./routes/search')(app, pool);

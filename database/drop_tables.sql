@@ -9,7 +9,6 @@ DROP TABLE reports;
 DROP TABLE blocked;
 DROP TABLE friend_requests;
 DROP TABLE friends;
-DROP TABLE partners;
 DROP TABLE topic_subscribers;
 DROP TABLE topics;
 DROP TABLE users;
