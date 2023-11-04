@@ -1,6 +1,6 @@
 -- TODO: Change all id PRIMARY KEY columns to type UUID instead of TEXT
-CREATE EXTENSION postgis; -- https://postgis.net/
-CREATE EXTENSION plpgsql;
+CREATE EXTENSION IF NOT EXISTS postgis; -- https://postgis.net/
+CREATE EXTENSION IF NOT EXISTS plpgsql;
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Dummy user
