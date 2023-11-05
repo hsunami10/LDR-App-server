@@ -75,7 +75,7 @@ CREATE EXTENSION postgis;
 
 ## General Troubleshooting
 
-### **yarn install**
+### yarn install
 
 If you run into an error like below:
 
@@ -111,5 +111,21 @@ CREATE TABLE sessions (
   expire timestamp(6) with time zone NOT NULL
 );
 ```
+### yarn start
+If you get the below error:
+```shell
+node:internal/modules/cjs/loader:1327
+  return process.dlopen(module, path.toNamespacedPath(filename));
+                 ^
+
+Error: The module '/Users/michaelhsu/Documents/GitHub/LDR-App-server/node_modules/bcrypt/lib/binding/bcrypt_lib.node'
+was compiled against a different Node.js version using
+NODE_MODULE_VERSION 59. This version of Node.js requires
+NODE_MODULE_VERSION 115. Please try re-compiling or re-installing
+the module (for instance, using `npm rebuild` or `npm install`).
+    at Module._extensions..node (node:internal/modules/cjs/loader:1327:18)
+    at Module.load (node:internal/modules/cjs/loader:1091:32)
+```
+Change your node version to `v9.9.0` using `nvm use 9.9.0`.
 
 ***TODO: Figure out `create extension postgis;` error***
