@@ -1,5 +1,9 @@
 [Mobile app / front-end code is here](https://github.com/hsunami10/LDR-App-client/)
 
+Working Versions:
+- Node `v9.9.0`
+- NVM `v0.34.0`
+
 # Setup Instructions
 
 ## PostgreSQL Database
