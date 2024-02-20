@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 3000; // TODO: Change this when in production
 
 // Initialize and configure database
 const pool = new Pool({
-  connectionString: `postgres://michaelhsu:ewoks4life@localhost:5432/ldr_app` // TODO: Change this when in production
+  connectionString: `postgres://michaelhsu:password@localhost:5432/ldr_app` // TODO: Change this when in production
 });
 pool.on('error', (err, client) => {
   console.error('Unexpected error on idle client', err);
